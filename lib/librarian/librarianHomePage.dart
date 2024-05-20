@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:library_app/librarian/bookList.dart';
+import 'package:library_app/room/roomList.dart';
 
 class LibrarianHomePage extends StatefulWidget {
   const LibrarianHomePage({Key? key}) : super(key: key);
@@ -91,6 +92,11 @@ class LibrarianHomePageState extends State<LibrarianHomePage> {
                     title: 'Manage Rooms',
                     onTap: () {
                       // Navigate to manage rooms page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const RoomList()),
+                      );
                     },
                   ),
                   _buildMenuItem(
