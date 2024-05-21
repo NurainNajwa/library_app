@@ -1,30 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Updateroom extends StatefulWidget {
-  final DocumentSnapshot? room;
+class UpdateReservation extends StatefulWidget {
+  final DocumentSnapshot reservation;
 
-  Updateroom({this.room});
+  UpdateReservation({required this.reservation});
 
   @override
-  _UpdateroomState createState() => _UpdateroomState();
+  _UpdateReservationState createState() => _UpdateReservationState();
 }
 
-class _UpdateroomState extends State<Updateroom> {
+class _UpdateReservationState extends State<UpdateReservation> {
   final _formKey = GlobalKey<FormState>();
-  String selectedRoom = '';
+  late String selectedRoom;
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
   final List<String> rooms = ['Room 1', 'Room 2', 'Room 3', 'Room 4'];
+  final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    selectedRoom = widget.room?['room'] ?? '';
-    selectedDate = (widget.room?['date'] as Timestamp?)?.toDate();
-    selectedTime = TimeOfDay.fromDateTime(
-      (widget.room?['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
-    );
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      setState(() {
+        selectedRoom = widget.reservation['room'];
+        selectedDate = (widget.reservation['date'] as Timestamp).toDate();
+        selectedTime = TimeOfDay.fromDateTime(selectedDate!);
+        _dateController.text = selectedDate!.toString().split(' ')[0];
+        _timeController.text = selectedTime!.format(context);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _dateController.dispose();
+    _timeController.dispose();
+    super.dispose();
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -37,6 +50,7 @@ class _UpdateroomState extends State<Updateroom> {
     if (picked != null) {
       setState(() {
         selectedDate = picked;
+        _dateController.text = '${selectedDate!.toLocal()}'.split(' ')[0];
       });
     }
   }
@@ -49,6 +63,7 @@ class _UpdateroomState extends State<Updateroom> {
     if (picked != null) {
       setState(() {
         selectedTime = picked;
+        _timeController.text = selectedTime!.format(context);
       });
     }
   }
@@ -58,7 +73,7 @@ class _UpdateroomState extends State<Updateroom> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Update room',
+          'Update Reservation',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -109,13 +124,12 @@ class _UpdateroomState extends State<Updateroom> {
                 ),
                 SizedBox(height: 20),
                 TextFormField(
+                  readOnly: true,
+                  controller: _dateController,
                   decoration: InputDecoration(
                     labelText: 'Select Date',
-                    hintText: selectedDate != null
-                        ? '${selectedDate!.toLocal()}'.split(' ')[0]
-                        : 'Tap to select date',
+                    hintText: 'Tap to select date',
                   ),
-                  readOnly: true,
                   onTap: () => _selectDate(context),
                   validator: (value) {
                     if (selectedDate == null) {
@@ -126,13 +140,12 @@ class _UpdateroomState extends State<Updateroom> {
                 ),
                 SizedBox(height: 20),
                 TextFormField(
+                  readOnly: true,
+                  controller: _timeController,
                   decoration: InputDecoration(
                     labelText: 'Select Time',
-                    hintText: selectedTime != null
-                        ? selectedTime!.format(context)
-                        : 'Tap to select time',
+                    hintText: 'Tap to select time',
                   ),
-                  readOnly: true,
                   onTap: () => _selectTime(context),
                   validator: (value) {
                     if (selectedTime == null) {
@@ -148,40 +161,41 @@ class _UpdateroomState extends State<Updateroom> {
                       if (_formKey.currentState!.validate()) {
                         _formKey.currentState!.save();
 
-                        // Create a map representing the room data
-                        Map<String, dynamic> updatedroomData = {
+                        // Create a map representing the reservation data
+                        Map<String, dynamic> updatedReservationData = {
                           'room': selectedRoom,
-                          'date': DateTime(
+                          'date': Timestamp.fromDate(DateTime(
                             selectedDate!.year,
                             selectedDate!.month,
                             selectedDate!.day,
                             selectedTime!.hour,
                             selectedTime!.minute,
-                          ),
+                          )),
                         };
 
                         try {
-                          // Update the room data in Firebase Firestore
+                          // Update the reservation data in Firebase Firestore
                           await FirebaseFirestore.instance
-                              .collection('rooms')
-                              .doc(widget.room!.id)
-                              .update(updatedroomData);
+                              .collection('Reservations')
+                              .doc(widget.reservation.id)
+                              .update(updatedReservationData);
 
-                          // If the room is successfully updated, show a snackbar
+                          // If the reservation is successfully updated, show a snackbar
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Room updated successfully'),
+                              content: Text('Reservation updated successfully'),
                             ),
                           );
 
                           // Navigate back to the previous screen
                           Navigator.pop(context);
                         } catch (error) {
-                          // Handle any errors that occur during updating the room
-                          print('Error updating room: $error');
+                          // Handle any errors that occur during updating the reservation
+                          print('Error updating reservation: $error');
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Error updating room: $error'),
+                              content:
+                                  Text('Error updating reservation: $error'),
                             ),
                           );
                         }
@@ -199,7 +213,7 @@ class _UpdateroomState extends State<Updateroom> {
                       ),
                     ),
                     child: Text(
-                      'Update Room',
+                      'Update Reservation',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
