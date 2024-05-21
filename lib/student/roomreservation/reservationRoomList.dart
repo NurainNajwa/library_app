@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:library_app/student/roomreservation/deleteReservation.dart';
+import 'package:library_app/student/roomreservation/updateReservation.dart';
 import 'reserveRoom.dart';
 
 class RoomList extends StatefulWidget {
@@ -10,13 +12,8 @@ class RoomList extends StatefulWidget {
 }
 
 class RoomListState extends State<RoomList> {
-  late CollectionReference _roomsCollection;
-
-  @override
-  void initState() {
-    super.initState();
-    _roomsCollection = FirebaseFirestore.instance.collection('Rooms');
-  }
+  final CollectionReference _reservationsCollection =
+      FirebaseFirestore.instance.collection('Reservations');
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +24,7 @@ class RoomListState extends State<RoomList> {
           child: Scaffold(
             appBar: AppBar(
               title: const Text(
-                'Room List',
+                'Reservation List',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20.0,
@@ -55,7 +52,7 @@ class RoomListState extends State<RoomList> {
               ),
             ),
             body: StreamBuilder<QuerySnapshot>(
-              stream: _roomsCollection.snapshots(),
+              stream: _reservationsCollection.snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return const Center(
@@ -71,14 +68,17 @@ class RoomListState extends State<RoomList> {
 
                 if (snapshot.data!.docs.isEmpty) {
                   return const Center(
-                    child: Text('No rooms available'),
+                    child: Text('No reservations available'),
                   );
                 }
 
                 return ListView.builder(
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
-                    var room = snapshot.data!.docs[index];
+                    var reservation = snapshot.data!.docs[index];
+                    var date = (reservation['date'] as Timestamp).toDate();
+                    var time = reservation['time'];
+
                     return Container(
                       decoration: BoxDecoration(
                         border: Border(
@@ -86,21 +86,21 @@ class RoomListState extends State<RoomList> {
                         ),
                       ),
                       child: ListTile(
-                        title: Text(room['name'].toString()),
-                        subtitle:
-                            Text('Capacity: ${room['capacity'].toString()}'),
+                        title: Text('Room: ${reservation['room']}'),
+                        subtitle: Text(
+                            'Date: ${date.toLocal().toString().split(' ')[0]}\nTime: $time'),
                         trailing: IconButton(
                           icon: const Icon(
                             Icons.edit,
                             color: Colors.blue,
                           ),
                           onPressed: () {
-                            // Navigate to reservation page with the selected room
+                            // Navigate to reservation page with the selected reservation
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    AddReservation(room: room),
+                                    AddReservation(room: reservation),
                               ),
                             ).then((_) {
                               // Trigger a rebuild to update the UI after returning
@@ -109,11 +109,12 @@ class RoomListState extends State<RoomList> {
                           },
                         ),
                         onTap: () {
-                          // Navigate to reservation page with the selected room
+                          // Navigate to reservation page with the selected reservation
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => AddReservation(room: room),
+                              builder: (context) =>
+                                  AddReservation(room: reservation),
                             ),
                           ).then((_) {
                             // Trigger a rebuild to update the UI after returning
@@ -131,7 +132,7 @@ class RoomListState extends State<RoomList> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AddReservation(),
+                    builder: (context) => Updateroom(room: null),
                   ),
                 ).then((_) {
                   // Trigger a rebuild to update the UI after returning

@@ -16,6 +16,8 @@ class _AddReservationState extends State<AddReservation> {
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
   final List<String> rooms = ['Room 1', 'Room 2', 'Room 3', 'Room 4'];
+  final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
 
   @override
   void initState() {
@@ -23,6 +25,13 @@ class _AddReservationState extends State<AddReservation> {
     if (widget.room != null) {
       selectedRoom = widget.room!['name'];
     }
+  }
+
+  @override
+  void dispose() {
+    _dateController.dispose();
+    _timeController.dispose();
+    super.dispose();
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -35,6 +44,7 @@ class _AddReservationState extends State<AddReservation> {
     if (picked != null) {
       setState(() {
         selectedDate = picked;
+        _dateController.text = '${selectedDate!.toLocal()}'.split(' ')[0];
       });
     }
   }
@@ -47,6 +57,7 @@ class _AddReservationState extends State<AddReservation> {
     if (picked != null) {
       setState(() {
         selectedTime = picked;
+        _timeController.text = selectedTime!.format(context);
       });
     }
   }
@@ -109,11 +120,10 @@ class _AddReservationState extends State<AddReservation> {
                   SizedBox(height: 20),
                 ],
                 TextFormField(
+                  controller: _dateController,
                   decoration: InputDecoration(
                     labelText: 'Select Date',
-                    hintText: selectedDate != null
-                        ? '${selectedDate!.toLocal()}'.split(' ')[0]
-                        : 'Tap to select date',
+                    hintText: 'Tap to select date',
                   ),
                   readOnly: true,
                   onTap: () => _selectDate(context),
@@ -126,11 +136,10 @@ class _AddReservationState extends State<AddReservation> {
                 ),
                 SizedBox(height: 20),
                 TextFormField(
+                  controller: _timeController,
                   decoration: InputDecoration(
                     labelText: 'Select Time',
-                    hintText: selectedTime != null
-                        ? selectedTime!.format(context)
-                        : 'Tap to select time',
+                    hintText: 'Tap to select time',
                   ),
                   readOnly: true,
                   onTap: () => _selectTime(context),
@@ -177,6 +186,8 @@ class _AddReservationState extends State<AddReservation> {
                             }
                             selectedDate = null;
                             selectedTime = null;
+                            _dateController.clear();
+                            _timeController.clear();
                           });
                         } catch (error) {
                           // Handle any errors that occur during adding the reservation

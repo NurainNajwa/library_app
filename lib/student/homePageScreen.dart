@@ -162,6 +162,8 @@ class _HomePageState extends State<HomePage> {
                             ElevatedButton(
                               onPressed: () {
                                 // Navigate to Rooms Page
+                                Navigator.pushNamed(
+                                    context, '/reservationRoomList');
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white,

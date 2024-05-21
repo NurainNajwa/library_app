@@ -9,6 +9,7 @@ import 'student/homePageScreen.dart';
 import 'auth/forgotpasswordScreen.dart';
 import 'student/userprofileScreen.dart';
 import 'librarian/librarianHomePage.dart';
+import 'student/roomreservation/reservationRoomList.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +47,8 @@ class MyApp extends StatelessWidget {
         '/forgotPassword': (context) => const forgotpasswordscreen(),
         '/userProfile': (context) => const UserProfileScreen(),
         '/librarian': (context) => const LibrarianHomePage(),
-        '/booklistst': (context) => const BookListStudent()
+        '/booklistst': (context) => const BookListStudent(),
+        '/reservationRoomList': (context) => const RoomList()
       },
     );
   }
