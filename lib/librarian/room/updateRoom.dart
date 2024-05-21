@@ -16,7 +16,6 @@ class _UpdateRoomState extends State<UpdateRoom> {
   late TextEditingController _roomNumberController;
   late TextEditingController _capacityController;
   late TextEditingController _roomTypeController;
-  late TextEditingController _statusController;
 
   @override
   void initState() {
@@ -26,7 +25,6 @@ class _UpdateRoomState extends State<UpdateRoom> {
     _roomNumberController = TextEditingController();
     _capacityController = TextEditingController();
     _roomTypeController = TextEditingController();
-    _statusController = TextEditingController();
     // Load existing room data if available
     loadRoomData();
   }
@@ -38,7 +36,6 @@ class _UpdateRoomState extends State<UpdateRoom> {
     _roomNumberController.dispose();
     _capacityController.dispose();
     _roomTypeController.dispose();
-    _statusController.dispose();
     super.dispose();
   }
 
@@ -56,7 +53,6 @@ class _UpdateRoomState extends State<UpdateRoom> {
         _roomNumberController.text = data['roomNumber'] ?? '';
         _capacityController.text = data['capacity'] ?? '';
         _roomTypeController.text = data['roomType'] ?? '';
-        _statusController.text = data['status'] ?? '';
       }
     } catch (error) {
       print('Error loading room data: $error');
@@ -136,16 +132,6 @@ class _UpdateRoomState extends State<UpdateRoom> {
                     return null;
                   },
                 ),
-                TextFormField(
-                  controller: _statusController,
-                  decoration: InputDecoration(labelText: 'Status'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the status';
-                    }
-                    return null;
-                  },
-                ),
                 SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
@@ -157,7 +143,6 @@ class _UpdateRoomState extends State<UpdateRoom> {
                           'roomNumber': _roomNumberController.text,
                           'capacity': _capacityController.text,
                           'roomType': _roomTypeController.text,
-                          'status': _statusController.text,
                         };
 
                         try {

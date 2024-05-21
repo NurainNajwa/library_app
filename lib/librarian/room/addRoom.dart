@@ -12,7 +12,6 @@ class _AddRoomState extends State<AddRoom> {
   var roomType = '';
   var roomId = '';
   var roomNumber = '';
-  var status = '';
 
   @override
   Widget build(BuildContext context) {
@@ -95,18 +94,6 @@ class _AddRoomState extends State<AddRoom> {
                     roomType = value!;
                   },
                 ),
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Status'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the status';
-                    }
-                    return null;
-                  },
-                  onSaved: (value) {
-                    status = value!;
-                  },
-                ),
                 SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
@@ -120,7 +107,6 @@ class _AddRoomState extends State<AddRoom> {
                           'roomNumber': roomNumber,
                           'capacity': capacity,
                           'roomType': roomType,
-                          'status': status,
                         };
 
                         try {

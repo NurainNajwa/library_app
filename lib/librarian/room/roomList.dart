@@ -12,13 +12,8 @@ class RoomList extends StatefulWidget {
 }
 
 class RoomListState extends State<RoomList> {
-  late CollectionReference _roomsCollection;
-
-  @override
-  void initState() {
-    super.initState();
-    _roomsCollection = FirebaseFirestore.instance.collection('Room');
-  }
+  final CollectionReference _roomsCollection =
+      FirebaseFirestore.instance.collection('Room');
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +72,17 @@ class RoomListState extends State<RoomList> {
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
               var room = snapshot.data!.docs[index];
+              var roomData = room.data() as Map<String, dynamic>;
+
+              // Check if the necessary fields exist
+              if (!roomData.containsKey('roomType') ||
+                  !roomData.containsKey('capacity')) {
+                return ListTile(
+                  title: const Text('Invalid room data'),
+                  subtitle: const Text('Please check the room details'),
+                );
+              }
+
               return Container(
                 decoration: BoxDecoration(
                   border: Border(
@@ -84,8 +90,9 @@ class RoomListState extends State<RoomList> {
                   ),
                 ),
                 child: ListTile(
-                  title: Text(room['name'].toString()),
-                  subtitle: Text('Capacity: ${room['capacity'].toString()}'),
+                  title: Text(roomData['roomType'].toString()),
+                  subtitle:
+                      Text('Capacity: ${roomData['capacity'].toString()}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
