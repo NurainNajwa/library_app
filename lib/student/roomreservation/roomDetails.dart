@@ -1,8 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'reservationRoomList.dart';
+import 'roomTabs.dart'; // Import RoomTabs page
 
 class RoomDetails extends StatefulWidget {
   final String roomid;
@@ -164,7 +163,14 @@ class _RoomDetailsState extends State<RoomDetails> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Book borrowed successfully'),
+      content: Text('Room reserved successfully'),
     ));
+
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => RoomTabs(RoomID: roomId),
+    //   ),
+    // );
   }
 }

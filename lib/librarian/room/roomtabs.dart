@@ -90,7 +90,7 @@ class _RoomTabsState extends State<RoomTabs> {
                   future: getStudentDetails(RoomData['userid']),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Text('Booker: Loading...');
+                      return Text('booker: Loading...');
                     } else if (snapshot.hasError) {
                       return Text('Booker: Error: ${snapshot.error}');
                     } else {
@@ -99,6 +99,28 @@ class _RoomTabsState extends State<RoomTabs> {
                     }
                   },
                 ),
+                trailing: 
+                  status == 'Booked'
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              _acceptRoomRequest(RoomData.id);
+                            },
+                            icon: Icon(Icons.check),
+                          ),
+                        ],
+                      )
+                    : 
+                    status == 'Completed'
+                  ? IconButton(
+                    onPressed: () {
+                      _completeAvailable(RoomData.id);
+                    },
+                    icon: Icon(Icons.check),
+                    )
+                    : null,
               );
             },
           );
@@ -113,5 +135,17 @@ class _RoomTabsState extends State<RoomTabs> {
 
   Future<DocumentSnapshot> getStudentDetails(String userid) async {
     return await FirebaseFirestore.instance.collection('Student').doc(userid).get();
+  }
+
+  Future<void> _acceptRoomRequest(String roomID) async {
+    await FirebaseFirestore.instance.collection('Book').doc(roomID).update({
+      'status': 'Completed',
+    });
+  }
+
+  Future<void> _completeAvailable(String roomID) async {
+    await FirebaseFirestore.instance.collection('Book').doc(roomID).update({
+      'status': 'available',
+    });
   }
 }
