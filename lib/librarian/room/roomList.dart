@@ -13,7 +13,7 @@ class RoomList extends StatefulWidget {
 
 class RoomListState extends State<RoomList> {
   final CollectionReference _roomsCollection =
-      FirebaseFirestore.instance.collection('Room');
+      FirebaseFirestore.instance.collection('Rooms'); // Changed to 'Rooms'
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +48,7 @@ class RoomListState extends State<RoomList> {
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _roomsCollection.snapshots(),
+        stream: _roomsCollection.snapshots(), // Changed to use _roomsCollection
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(

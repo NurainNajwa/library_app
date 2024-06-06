@@ -57,7 +57,7 @@ class _RoomTabsState extends State<RoomTabs> {
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('Room')
+          .collection('Rooms')
           .where('userid', isEqualTo: bookerID)
           .where('status', isEqualTo: firestoreStatus)
           .snapshots(),
@@ -81,13 +81,15 @@ class _RoomTabsState extends State<RoomTabs> {
                     } else if (snapshot.hasError) {
                       return Text('Error: ${snapshot.error}');
                     } else {
-                      var Room = snapshot.data!;
-                      return Text('Title: ${Room['title']}, Status: ${Room['status']}');
+                      var Rooms = snapshot.data!;
+                      return Text(
+                          'Title: ${Rooms['title']}, Status: ${Rooms['status']}');
                     }
                   },
                 ),
                 subtitle: FutureBuilder<DocumentSnapshot>(
-                  future: getStudentDetails(RoomData['userid']),
+                  future: getRoomDetails(
+                      RoomData['userid']), // Changed to getRoomDetails
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Text('booker: Loading...');
@@ -99,8 +101,7 @@ class _RoomTabsState extends State<RoomTabs> {
                     }
                   },
                 ),
-                trailing: 
-                  status == 'Booked'
+                trailing: status == 'Booked'
                     ? Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -112,15 +113,14 @@ class _RoomTabsState extends State<RoomTabs> {
                           ),
                         ],
                       )
-                    : 
-                    status == 'Completed'
-                  ? IconButton(
-                    onPressed: () {
-                      _completeAvailable(RoomData.id);
-                    },
-                    icon: Icon(Icons.check),
-                    )
-                    : null,
+                    : status == 'Completed'
+                        ? IconButton(
+                            onPressed: () {
+                              _completeAvailable(RoomData.id);
+                            },
+                            icon: Icon(Icons.check),
+                          )
+                        : null,
               );
             },
           );
@@ -130,21 +130,20 @@ class _RoomTabsState extends State<RoomTabs> {
   }
 
   Future<DocumentSnapshot> getRoomDetails(String roomid) async {
-    return await FirebaseFirestore.instance.collection('Room').doc(roomid).get();
-  }
-
-  Future<DocumentSnapshot> getStudentDetails(String userid) async {
-    return await FirebaseFirestore.instance.collection('Student').doc(userid).get();
+    return await FirebaseFirestore.instance
+        .collection('Rooms')
+        .doc(roomid)
+        .get();
   }
 
   Future<void> _acceptRoomRequest(String roomID) async {
-    await FirebaseFirestore.instance.collection('Book').doc(roomID).update({
+    await FirebaseFirestore.instance.collection('Rooms').doc(roomID).update({
       'status': 'Completed',
     });
   }
 
   Future<void> _completeAvailable(String roomID) async {
-    await FirebaseFirestore.instance.collection('Book').doc(roomID).update({
+    await FirebaseFirestore.instance.collection('Rooms').doc(roomID).update({
       'status': 'available',
     });
   }

@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:library_app/firebase_auth_implementation/firebase_auth_services.dart';
 
@@ -15,6 +16,7 @@ class _RegScreenState extends State<RegScreen> {
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   TextEditingController _confirmpasswordController = TextEditingController();
+  TextEditingController _courseController = TextEditingController();
   late bool obscureText = true; // Declared obscureText variable
 
   @override
@@ -24,6 +26,7 @@ class _RegScreenState extends State<RegScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmpasswordController.dispose();
+    _courseController.dispose();
     super.dispose();
   }
 
@@ -75,13 +78,15 @@ class _RegScreenState extends State<RegScreen> {
                         Icons.confirmation_number, _matricnumberController),
                     buildTextFieldWithIcon(
                         'Email', Icons.email, _emailController),
+                    buildTextFieldWithIcon(
+                        'Course', Icons.book, _courseController),
                     buildPasswordTextFieldWithIcon(
                         'Password', _passwordController),
                     buildPasswordTextFieldWithIcon(
                         'Confirm Password', _confirmpasswordController),
                     const SizedBox(height: 70),
                     GestureDetector(
-                      onTap: _singUp,
+                      onTap: _signUp,
                       child: Container(
                         height: 55,
                         width: 300,
@@ -132,6 +137,7 @@ class _RegScreenState extends State<RegScreen> {
       String label, TextEditingController controller) {
     return TextField(
       obscureText: obscureText,
+      controller: controller,
       decoration: InputDecoration(
         suffixIcon: IconButton(
           icon: Icon(
@@ -153,14 +159,26 @@ class _RegScreenState extends State<RegScreen> {
     );
   }
 
-  void _singUp() async {
+  void _signUp() async {
     String username = _usernameController.text;
     String matNo = _matricnumberController.text;
     String email = _emailController.text;
+    String course = _courseController.text;
     String password = _passwordController.text;
+
     User? user = await _auth.signUpWithEmailAndPassword(email, password);
     if (user != null) {
-      print("User is successfully created ");
+      // Save additional user data to Firestore
+      await FirebaseFirestore.instance.collection('Student').doc(user.uid).set({
+        'course': course,
+        'email': email,
+        'matricno': matNo,
+        'name': username,
+        'password':
+            password, // Note: Storing passwords in plaintext is not secure. Consider hashing it.
+        'userid': user.uid,
+      });
+      print("User is successfully created and data stored in Firestore");
       Navigator.pushNamed(context, '/login');
     } else {
       print("Sign Up unsuccessful");

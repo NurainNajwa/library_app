@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'roomTabs.dart'; // Import RoomTabs page
+// Import RoomTabs page
 
 class RoomDetails extends StatefulWidget {
-  final String roomid;
+  final String roomId;
 
-  const RoomDetails({Key? key, required this.roomid}) : super(key: key);
+  const RoomDetails({Key? key, required this.roomId}) : super(key: key);
 
   @override
   _RoomDetailsState createState() => _RoomDetailsState();
@@ -19,7 +19,7 @@ class _RoomDetailsState extends State<RoomDetails> {
   @override
   void initState() {
     super.initState();
-    _RoomDetails = getRoomDetails(widget.roomid);
+    _RoomDetails = getRoomDetails(widget.roomId);
     borrowerId = FirebaseAuth.instance.currentUser!.uid;
   }
 
@@ -77,7 +77,7 @@ class _RoomDetailsState extends State<RoomDetails> {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Room Number: ${roomData['roomnumber']}',
+                  'Room Number: ${roomData['roomNumber']}',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.black54,
@@ -140,7 +140,7 @@ class _RoomDetailsState extends State<RoomDetails> {
 
   Future<DocumentSnapshot> getRoomDetails(String roomId) async {
     DocumentSnapshot snapshot =
-        await FirebaseFirestore.instance.collection('Room').doc(roomId).get();
+        await FirebaseFirestore.instance.collection('Rooms').doc(roomId).get();
 
     print("Room Data: ${snapshot.data()}");
 
@@ -149,7 +149,7 @@ class _RoomDetailsState extends State<RoomDetails> {
 
   Future<void> _borrowRoom(String roomId) async {
     DocumentReference bookRef =
-        FirebaseFirestore.instance.collection('Room').doc(roomId);
+        FirebaseFirestore.instance.collection('Rooms').doc(roomId);
 
     await bookRef.update({'status': 'Booked'});
 
@@ -157,7 +157,7 @@ class _RoomDetailsState extends State<RoomDetails> {
         FirebaseFirestore.instance.collection('borrowedRooms');
 
     await borrowedRoom.add({
-      'roomid': roomId,
+      'roomId': roomId,
       'userid': borrowerId,
       'borrowdate': Timestamp.now(),
     });

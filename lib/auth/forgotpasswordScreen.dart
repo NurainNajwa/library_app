@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'loginScreen.dart'; // Ensure the LoginScreen class is properly imported
 
 class forgotpasswordscreen extends StatelessWidget {
@@ -6,6 +8,8 @@ class forgotpasswordscreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    TextEditingController _emailController = TextEditingController();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -30,10 +34,11 @@ class forgotpasswordscreen extends StatelessWidget {
           children: [
             const Text(
               'Enter your email to reset your password',
-              style: TextStyle(fontSize: 18, color: Colors.white),
+              style: TextStyle(fontSize: 18, color: Colors.black),
             ),
             const SizedBox(height: 20),
             TextFormField(
+              controller: _emailController,
               style: const TextStyle(color: Colors.black),
               decoration: const InputDecoration(
                 labelText: 'Email',
@@ -52,7 +57,7 @@ class forgotpasswordscreen extends StatelessWidget {
             const SizedBox(height: 20),
             GestureDetector(
               onTap: () {
-                _sendPasswordResetEmail(context);
+                _sendPasswordResetEmail(context, _emailController.text);
               },
               child: Container(
                 height: 55,
@@ -85,20 +90,43 @@ class forgotpasswordscreen extends StatelessWidget {
   }
 
   // Function to send password reset email
-  void _sendPasswordResetEmail(BuildContext context) {
-    // Implement your actual logic here to send the password reset email
-    // For demonstration purposes, we're just showing a snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Password reset email sent!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+  void _sendPasswordResetEmail(BuildContext context, String email) async {
+    // Check if the email exists in Firestore
+    final userCollection = FirebaseFirestore.instance.collection('Student');
+    final querySnapshot =
+        await userCollection.where('email', isEqualTo: email).get();
+    if (querySnapshot.docs.isEmpty) {
+      // Email does not exist in the database
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email does not exist in the database!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      // Email exists, send password reset email
+      try {
+        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password reset email sent!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
 
-    // Navigate back to login screen after resetting password
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const loginScreen()),
-    );
+        // Navigate back to login screen after resetting password
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const loginScreen()),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send password reset email: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 }

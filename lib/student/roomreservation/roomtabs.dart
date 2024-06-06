@@ -57,7 +57,7 @@ class _RoomTabsState extends State<RoomTabs> {
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('Room')
+          .collection('Rooms')
           .where('userid', isEqualTo: bookerID)
           .where('status', isEqualTo: firestoreStatus)
           .snapshots(),
@@ -74,7 +74,7 @@ class _RoomTabsState extends State<RoomTabs> {
               var RoomData = borrowedRooms[index];
               return ListTile(
                 title: FutureBuilder<DocumentSnapshot>(
-                  future: getRoomDetails(RoomData['roomid']),
+                  future: getRoomDetails(RoomData['roomId']),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Text('Loading...');
@@ -82,7 +82,8 @@ class _RoomTabsState extends State<RoomTabs> {
                       return Text('Error: ${snapshot.error}');
                     } else {
                       var Room = snapshot.data!;
-                      return Text('Title: ${Room['title']}, Status: ${Room['status']}');
+                      return Text(
+                          'Title: ${Room['title']}, Status: ${Room['status']}');
                     }
                   },
                 ),
@@ -107,11 +108,17 @@ class _RoomTabsState extends State<RoomTabs> {
     );
   }
 
-  Future<DocumentSnapshot> getRoomDetails(String roomid) async {
-    return await FirebaseFirestore.instance.collection('Room').doc(roomid).get();
+  Future<DocumentSnapshot> getRoomDetails(String roomId) async {
+    return await FirebaseFirestore.instance
+        .collection('Rooms')
+        .doc(roomId)
+        .get();
   }
 
   Future<DocumentSnapshot> getStudentDetails(String userid) async {
-    return await FirebaseFirestore.instance.collection('Student').doc(userid).get();
+    return await FirebaseFirestore.instance
+        .collection('Student')
+        .doc(userid)
+        .get();
   }
 }

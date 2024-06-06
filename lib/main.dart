@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
         '/userProfile': (context) => const UserProfileScreen(),
         '/librarian': (context) => const LibrarianHomePage(),
         '/booklistst': (context) => const BookListStudent(),
-        '/reservationRoomList': (context) => const ReservRoomList()
+        '/reservationRoomList': (context) => const ReserveRoomList()
       },
     );
   }

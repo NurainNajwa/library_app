@@ -237,12 +237,30 @@ class _logScreen extends State<loginScreen> {
     String email = _emailController.text;
     String password = _passwordController.text;
 
-    User? user = await _auth.signInWithEmailAndPassword(email, password);
-    if (user != null) {
-      print("User is successfully signed in");
-      Navigator.pushNamed(context, '/home');
-    } else {
-      print("Sign In unsuccessful");
+    if (email != 'library@domain.com') {
+      // Librarian login
+      if (password.isNotEmpty) {
+        // Proceed with librarian login
+        try {
+          User? userCredential = await _auth.signInWithEmailAndPassword(
+            email,
+            password,
+          );
+
+          if (userCredential != null) {
+            print("Librarian is successfully signed in");
+            Navigator.pushNamed(context, '/home');
+          } else {
+            print("Student sign in unsuccessful");
+          }
+        } catch (e) {
+          print("Error signing in as student: $e");
+          // Handle sign-in errors
+        }
+      } else {
+        // Password is empty
+        print("Password is required for student login");
+      }
     }
   }
 

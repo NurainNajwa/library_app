@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'roomDetails.dart';
 
-class ReservRoomList extends StatefulWidget {
-  const ReservRoomList({Key? key}) : super(key: key);
+class ReserveRoomList extends StatefulWidget {
+  const ReserveRoomList({Key? key}) : super(key: key);
 
   @override
-  ReservRoomListState createState() => ReservRoomListState();
+  ReserveRoomListState createState() => ReserveRoomListState();
 }
 
-class ReservRoomListState extends State<ReservRoomList> {
+class ReserveRoomListState extends State<ReserveRoomList> {
   final CollectionReference _roomsCollection =
-      FirebaseFirestore.instance.collection('Room');
+      FirebaseFirestore.instance.collection('Rooms');
   String? _selectedRoomType;
 
   @override
@@ -126,7 +126,7 @@ class ReservRoomListState extends State<ReservRoomList> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    RoomDetails(roomid: room.id),
+                                    RoomDetails(roomId: room.id),
                               ));
                         },
                       ),
