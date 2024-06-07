@@ -10,6 +10,7 @@ import 'auth/forgotpasswordScreen.dart';
 import 'student/userprofileScreen.dart';
 import 'librarian/librarianHomePage.dart';
 import 'student/roomreservation/reservationRoomList.dart';
+import 'student/bookingHistory.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,34 +22,30 @@ void main() async {
     projectId: 'library-app-502af',
     storageBucket: 'myapp-b9yt18.appspot.com',
   ));
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'UTM Library Management System',
       theme: ThemeData(
-        // Define your app's theme here.
         primarySwatch: Colors.blue,
       ),
-      // Define the initial route for your application
       initialRoute: '/',
-      // Define your app's routes
       routes: {
-        '/': (context) => const welcomeScreen(),
-        '/login': (context) => const loginScreen(),
-        '/register': (context) => const RegScreen(),
-        '/logout': (context) => const LogoutScreen(),
+        '/': (context) => welcomeScreen(),
+        '/login': (context) => loginScreen(),
+        '/register': (context) => RegScreen(),
+        '/logout': (context) => LogoutScreen(),
         '/home': (context) => HomePage(),
-        '/forgotPassword': (context) => const forgotpasswordscreen(),
-        '/userProfile': (context) => const UserProfileScreen(),
-        '/librarian': (context) => const LibrarianHomePage(),
-        '/booklistst': (context) => const BookListStudent(),
-        '/reservationRoomList': (context) => const ReserveRoomList()
+        '/forgotPassword': (context) => forgotpasswordscreen(),
+        '/userProfile': (context) => UserProfileScreen(),
+        '/librarian': (context) => LibrarianHomePage(),
+        '/booklistst': (context) => BookListStudent(),
+        '/reservationRoomList': (context) => ReserveRoomList(),
+        '/bookingHistory': (context) => BookingHistory(),
       },
     );
   }

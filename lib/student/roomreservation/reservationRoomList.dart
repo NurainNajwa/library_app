@@ -50,16 +50,9 @@ class ReserveRoomListState extends State<ReserveRoomList> {
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: DropdownButtonFormField<String>(
+            child: DropdownButton<String>(
               value: _selectedRoomType,
               hint: const Text('Select Room Type'),
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                filled: true,
-                fillColor: Colors.white,
-              ),
               items: <String>[
                 'Study Group Room',
                 'Meeting Room',
@@ -148,12 +141,11 @@ class ReserveRoomListState extends State<ReserveRoomList> {
                         ),
                         onTap: () {
                           Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  RoomDetails(roomId: room.id),
-                            ),
-                          );
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    RoomDetails(roomId: room.id),
+                              ));
                         },
                       ),
                     );

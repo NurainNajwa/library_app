@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:library_app/auth/welcomeScreen.dart';
 import 'package:library_app/student/userprofileScreen.dart';
+import 'package:library_app/student/bookingHistory.dart';
 
 void main() => runApp(MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -32,7 +33,7 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: Icon(Icons.notifications),
             onPressed: () {
-              //Navigate to Notification
+              // Navigate to Notification
             },
           ),
           IconButton(
@@ -212,28 +213,36 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-
-                  SizedBox(height: 20.0),
-                  // Centered Home Button
-                  Align(
-                    alignment: Alignment.center,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                      ),
-                      padding: EdgeInsets.all(16.0),
-                      child: IconButton(
-                        onPressed: () {},
-                        icon: Icon(
-                          Icons.home,
-                          color: Colors.grey,
+                        SizedBox(width: 10.0),
+                        Column(
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BookingHistory(),
+                                  ),
+                                ); // Navigate to Booking History Page
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                              ),
+                              child: Icon(Icons.history,
+                                  color: Color.fromRGBO(121, 37, 65, 1),
+                                  size: 30),
+                            ),
+                            SizedBox(height: 8.0),
+                            Text(
+                              'History',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
                         ),
-                        iconSize: 32.0,
-                      ),
+                      ],
                     ),
                   ),
                   SizedBox(height: 20.0),
@@ -261,6 +270,7 @@ class _HomePageState extends State<HomePage> {
                           title: Text('Books'),
                           onTap: () {
                             // Navigate to Books Page
+                            Navigator.pushNamed(context, '/booklistst');
                             setState(() {
                               _menuVisible = false;
                             });
@@ -270,6 +280,8 @@ class _HomePageState extends State<HomePage> {
                           title: Text('Rooms'),
                           onTap: () {
                             // Navigate to Rooms Page
+                            Navigator.pushNamed(
+                                context, '/reservationRoomList');
                             setState(() {
                               _menuVisible = false;
                             });
@@ -282,6 +294,20 @@ class _HomePageState extends State<HomePage> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const UserProfileScreen(),
+                              ),
+                            );
+                            setState(() {
+                              _menuVisible = false;
+                            });
+                          },
+                        ),
+                        ListTile(
+                          title: Text('History'),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BookingHistory(),
                               ),
                             );
                             setState(() {

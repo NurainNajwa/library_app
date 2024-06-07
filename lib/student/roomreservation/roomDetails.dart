@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-// Import RoomTabs page
 
 class RoomDetails extends StatefulWidget {
   final String roomId;
@@ -13,13 +12,13 @@ class RoomDetails extends StatefulWidget {
 }
 
 class _RoomDetailsState extends State<RoomDetails> {
-  late Future<DocumentSnapshot> _RoomDetails;
+  late Future<DocumentSnapshot> _roomDetails;
   late String borrowerId;
 
   @override
   void initState() {
     super.initState();
-    _RoomDetails = getRoomDetails(widget.roomId);
+    _roomDetails = getRoomDetails(widget.roomId);
     borrowerId = FirebaseAuth.instance.currentUser!.uid;
   }
 
@@ -50,7 +49,7 @@ class _RoomDetailsState extends State<RoomDetails> {
         ),
       ),
       body: FutureBuilder<DocumentSnapshot>(
-        future: _RoomDetails,
+        future: _roomDetails,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -106,7 +105,7 @@ class _RoomDetailsState extends State<RoomDetails> {
                   Center(
                     child: ElevatedButton(
                       onPressed: () async {
-                        await _borrowRoom(snapshot.data!.id);
+                        await _reserveRoom(snapshot.data!.id);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
@@ -142,35 +141,27 @@ class _RoomDetailsState extends State<RoomDetails> {
     DocumentSnapshot snapshot =
         await FirebaseFirestore.instance.collection('Rooms').doc(roomId).get();
 
-    print("Room Data: ${snapshot.data()}");
-
     return snapshot;
   }
 
-  Future<void> _borrowRoom(String roomId) async {
-    DocumentReference bookRef =
+  Future<void> _reserveRoom(String roomId) async {
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+    DocumentReference roomRef =
         FirebaseFirestore.instance.collection('Rooms').doc(roomId);
 
-    await bookRef.update({'status': 'Booked'});
+    await roomRef.update({'status': 'Booked'});
 
-    CollectionReference borrowedRoom =
+    CollectionReference roomReservations =
         FirebaseFirestore.instance.collection('borrowedRooms');
 
-    await borrowedRoom.add({
+    await roomReservations.add({
       'roomId': roomId,
-      'userid': borrowerId,
+      'userid': userId,
       'borrowdate': Timestamp.now(),
     });
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('Room reserved successfully'),
     ));
-
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (context) => RoomTabs(RoomID: roomId),
-    //   ),
-    // );
   }
 }

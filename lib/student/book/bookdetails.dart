@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class BookDetails extends StatefulWidget {
@@ -157,8 +156,6 @@ class _BookDetailsState extends State<BookDetails> {
   Future<DocumentSnapshot> getBookDetails(String bookId) async {
     DocumentSnapshot snapshot =
         await FirebaseFirestore.instance.collection('Book').doc(bookId).get();
-
-    print("Book Data: ${snapshot.data()}");
 
     return snapshot;
   }
