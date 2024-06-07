@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:library_app/librarian/book/bookList.dart';
 import 'package:library_app/librarian/room/roomList.dart';
+import 'package:library_app/librarian/book/finesListPage.dart'; // Add this import
 
 class LibrarianHomePage extends StatefulWidget {
   const LibrarianHomePage({Key? key}) : super(key: key);
@@ -106,6 +107,18 @@ class LibrarianHomePageState extends State<LibrarianHomePage> {
                       // Navigate to yearly statistics page
                     },
                   ),
+                  _buildMenuItem(
+                    icon: Icons.attach_money,
+                    title: 'View Fines',
+                    onTap: () {
+                      // Navigate to fines list page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const FinesListPage()),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -139,6 +152,15 @@ class LibrarianHomePageState extends State<LibrarianHomePage> {
             text: 'Statistics',
             onTap: () {
               // Handle click on Statistics
+            },
+          ),
+          _buildClickableText(
+            text: 'View Fines',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FinesListPage()),
+              );
             },
           ),
         ],

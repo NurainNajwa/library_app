@@ -2,10 +2,25 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 class FirebaseAuthServices {
-  FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   FirebaseAuthServices() {
-    Firebase.initializeApp(); // Initialize Firebase here
+    _initializeFirebase();
   }
+
+  Future<void> _initializeFirebase() async {
+    try {
+      await Firebase.initializeApp();
+    } catch (e) {
+      if (e.toString().contains('[core/duplicate-app]')) {
+        // Firebase app is already initialized, ignore the error
+        // No action needed, continue the app initialization
+      } else {
+        rethrow;
+      }
+    }
+  }
+
   Future<User?> signUpWithEmailAndPassword(
       String email, String password) async {
     try {
@@ -13,7 +28,7 @@ class FirebaseAuthServices {
           email: email, password: password);
       return credential.user;
     } catch (e) {
-      print("Error occured");
+      print("Error occurred");
     }
     return null;
   }
@@ -25,7 +40,7 @@ class FirebaseAuthServices {
           email: email, password: password);
       return credential.user;
     } catch (e) {
-      print("Error occured");
+      print("Error occurred");
     }
     return null;
   }

@@ -21,14 +21,17 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool _menuVisible = false;
   int _notificationCount = 0;
+  double _totalFines = 0.0;
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _fetchNotifications();
+    _fetchFines();
     _timer = Timer.periodic(Duration(minutes: 1), (timer) {
       _fetchNotifications();
+      _fetchFines();
     });
   }
 
@@ -49,6 +52,25 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {
       _notificationCount = notificationsSnapshot.docs.length;
+    });
+  }
+
+  Future<void> _fetchFines() async {
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+
+    QuerySnapshot finesSnapshot = await FirebaseFirestore.instance
+        .collection('fines')
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    double totalFines = 0.0;
+    for (var doc in finesSnapshot.docs) {
+      var data = doc.data() as Map<String, dynamic>;
+      totalFines += data['fineAmount'];
+    }
+
+    setState(() {
+      _totalFines = totalFines;
     });
   }
 
@@ -99,10 +121,12 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [
-            Color(0xffB81736),
-            Color(0xff281537),
-          ]),
+          gradient: LinearGradient(
+            colors: [
+              Color(0xffB81736),
+              Color(0xff281537),
+            ],
+          ),
         ),
         child: SafeArea(
           child: Stack(
@@ -127,20 +151,24 @@ class _HomePageState extends State<HomePage> {
                         Container(
                           padding: EdgeInsets.all(5),
                           decoration: BoxDecoration(
-                              color: Color.fromRGBO(244, 243, 243, 1),
-                              borderRadius: BorderRadius.circular(15)),
+                            color: Color.fromRGBO(244, 243, 243, 1),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
                           child: TextField(
                             decoration: InputDecoration(
-                                border: InputBorder.none,
-                                prefixIcon: Icon(
-                                  Icons.search,
-                                  color: Colors.black87,
-                                ),
-                                hintText: "Search you're looking for...",
-                                hintStyle: TextStyle(
-                                    color: Colors.grey, fontSize: 15)),
+                              border: InputBorder.none,
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color: Colors.black87,
+                              ),
+                              hintText: "Search you're looking for...",
+                              hintStyle: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 15,
+                              ),
+                            ),
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -168,6 +196,11 @@ class _HomePageState extends State<HomePage> {
                         Text(
                           'Books read',
                           style: TextStyle(color: Colors.white, fontSize: 16.0),
+                        ),
+                        SizedBox(height: 10.0),
+                        Text(
+                          'Total Fines: MYR $_totalFines',
+                          style: TextStyle(color: Colors.red, fontSize: 16.0),
                         ),
                       ],
                     ),
