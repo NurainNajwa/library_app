@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "954659947232",
+    "firebase_url": "https://library-app-502af-default-rtdb.firebaseio.com",
     "project_id": "library-app-502af",
     "storage_bucket": "library-app-502af.appspot.com"
   },
@@ -28,7 +29,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:954659947232:android:74c8e9687e70db16c60685",
         "android_client_info": {
-          "package_name": "com.example.library_app"
+          "package_name": "com.example.map_sprint1"
         }
       },
       "oauth_client": [],
