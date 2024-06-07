@@ -32,8 +32,8 @@ class _RoomReservationHistoryState extends State<RoomReservationHistory> {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('borrowedRooms')
-          .where('userid', isEqualTo: userId)
+          .collection('Reservations')
+          .where('userId', isEqualTo: userId)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -85,7 +85,7 @@ class _RoomReservationHistoryState extends State<RoomReservationHistory> {
                       ),
                     ),
                     subtitle: Text(
-                      'Reserved on: ${_formatDate(reservation['borrowdate'])}',
+                      'Reserved on: ${_formatDate(reservation['date'])}',
                       style: const TextStyle(
                         fontSize: 16.0,
                         color: Colors.black54,
@@ -95,9 +95,15 @@ class _RoomReservationHistoryState extends State<RoomReservationHistory> {
                       icon: Icon(Icons.delete, color: Colors.red),
                       onPressed: () async {
                         await FirebaseFirestore.instance
-                            .collection('borrowedRooms')
+                            .collection('Reservations')
                             .doc(reservation.id)
                             .delete();
+
+                        // Update room status to 'Available'
+                        await FirebaseFirestore.instance
+                            .collection('Rooms')
+                            .doc(reservation['roomId'])
+                            .update({'status': 'Available'});
                       },
                     ),
                   ),

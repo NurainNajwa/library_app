@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:library_app/auth/welcomeScreen.dart';
 import 'package:library_app/student/userprofileScreen.dart';
 import 'package:library_app/student/bookingHistory.dart';
+import 'package:library_app/student/notifications.dart';
+import 'package:badges/badges.dart' as badges;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 
 void main() => runApp(MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -15,6 +20,37 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _menuVisible = false;
+  int _notificationCount = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchNotifications();
+    _timer = Timer.periodic(Duration(minutes: 1), (timer) {
+      _fetchNotifications();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchNotifications() async {
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+
+    QuerySnapshot notificationsSnapshot = await FirebaseFirestore.instance
+        .collection('Notifications')
+        .where('userId', isEqualTo: userId)
+        .where('status', isEqualTo: 'upcoming')
+        .get();
+
+    setState(() {
+      _notificationCount = notificationsSnapshot.docs.length;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,11 +66,23 @@ class _HomePageState extends State<HomePage> {
           },
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.notifications),
-            onPressed: () {
-              // Navigate to Notification
-            },
+          badges.Badge(
+            position: badges.BadgePosition.topEnd(top: 5, end: 5),
+            badgeContent: Text(
+              _notificationCount.toString(),
+              style: TextStyle(color: Colors.white),
+            ),
+            child: IconButton(
+              icon: Icon(Icons.notifications),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationsPage(),
+                  ),
+                );
+              },
+            ),
           ),
           IconButton(
             icon: Icon(Icons.logout),
@@ -44,7 +92,7 @@ class _HomePageState extends State<HomePage> {
                 MaterialPageRoute(
                   builder: (context) => const welcomeScreen(),
                 ),
-              ); // Perform log out action
+              );
             },
           ),
         ],
@@ -119,10 +167,7 @@ class _HomePageState extends State<HomePage> {
                         SizedBox(height: 10.0),
                         Text(
                           'Books read',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.0,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 16.0),
                         ),
                       ],
                     ),
@@ -131,116 +176,48 @@ class _HomePageState extends State<HomePage> {
                   SizedBox(height: 20.0),
                   Align(
                     alignment: Alignment.center,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Wrap(
+                      spacing: 10.0,
+                      runSpacing: 10.0,
                       children: [
-                        Column(
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.pushNamed(context, '/booklistst');
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                              ),
-                              child: Icon(Icons.book,
-                                  color: Color.fromRGBO(121, 37, 65, 1),
-                                  size: 30),
-                            ),
-                            SizedBox(height: 8.0),
-                            Text(
-                              'Books',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ],
+                        _buildHomePageButton(
+                          icon: Icons.book,
+                          label: 'Books',
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/booklistst');
+                          },
                         ),
-                        SizedBox(width: 10.0),
-                        Column(
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                // Navigate to Rooms Page
-                                Navigator.pushNamed(
-                                    context, '/reservationRoomList');
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                              ),
-                              child: Icon(Icons.room,
-                                  color: Color.fromRGBO(121, 37, 65, 1),
-                                  size: 30),
-                            ),
-                            SizedBox(height: 8.0),
-                            Text(
-                              'Rooms',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ],
+                        _buildHomePageButton(
+                          icon: Icons.room,
+                          label: 'Rooms',
+                          onPressed: () {
+                            Navigator.pushNamed(
+                                context, '/reservationRoomList');
+                          },
                         ),
-                        SizedBox(width: 10.0),
-                        Column(
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const UserProfileScreen(),
-                                  ),
-                                ); // Navigate to Profile Page
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
+                        _buildHomePageButton(
+                          icon: Icons.person,
+                          label: 'Profile',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const UserProfileScreen(),
                               ),
-                              child: Icon(Icons.person,
-                                  color: Color.fromRGBO(121, 37, 65, 1),
-                                  size: 30),
-                            ),
-                            SizedBox(height: 8.0),
-                            Text(
-                              'Profile',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                        SizedBox(width: 10.0),
-                        Column(
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BookingHistory(),
-                                  ),
-                                ); // Navigate to Booking History Page
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
+                        _buildHomePageButton(
+                          icon: Icons.history,
+                          label: 'History',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BookingHistory(),
                               ),
-                              child: Icon(Icons.history,
-                                  color: Color.fromRGBO(121, 37, 65, 1),
-                                  size: 30),
-                            ),
-                            SizedBox(height: 8.0),
-                            Text(
-                              'History',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ],
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -256,30 +233,28 @@ class _HomePageState extends State<HomePage> {
                   bottom: 0,
                   child: Container(
                     color: Colors.white,
-                    child: ListView(
+                    child: Column(
                       children: [
-                        ListTile(
-                          title: Text('Home'),
+                        _buildMenuOption(
+                          title: 'Home',
                           onTap: () {
                             setState(() {
                               _menuVisible = false;
                             });
                           },
                         ),
-                        ListTile(
-                          title: Text('Books'),
+                        _buildMenuOption(
+                          title: 'Books',
                           onTap: () {
-                            // Navigate to Books Page
                             Navigator.pushNamed(context, '/booklistst');
                             setState(() {
                               _menuVisible = false;
                             });
                           },
                         ),
-                        ListTile(
-                          title: Text('Rooms'),
+                        _buildMenuOption(
+                          title: 'Rooms',
                           onTap: () {
-                            // Navigate to Rooms Page
                             Navigator.pushNamed(
                                 context, '/reservationRoomList');
                             setState(() {
@@ -287,8 +262,8 @@ class _HomePageState extends State<HomePage> {
                             });
                           },
                         ),
-                        ListTile(
-                          title: Text('Profile'),
+                        _buildMenuOption(
+                          title: 'Profile',
                           onTap: () {
                             Navigator.push(
                               context,
@@ -301,8 +276,8 @@ class _HomePageState extends State<HomePage> {
                             });
                           },
                         ),
-                        ListTile(
-                          title: Text('History'),
+                        _buildMenuOption(
+                          title: 'History',
                           onTap: () {
                             Navigator.push(
                               context,
@@ -320,6 +295,62 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomePageButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Column(
+      children: [
+        ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+          ),
+          child: Icon(
+            icon,
+            color: Color.fromRGBO(121, 37, 65, 1),
+            size: 30,
+          ),
+        ),
+        SizedBox(height: 8.0),
+        Text(
+          label,
+          style: TextStyle(color: Colors.white),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMenuOption({
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.all(15.0),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(10.0),
+          ),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 18.0,
+              color: Colors.black87,
+            ),
           ),
         ),
       ),

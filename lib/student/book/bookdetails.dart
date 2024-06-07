@@ -166,13 +166,27 @@ class _BookDetailsState extends State<BookDetails> {
 
     await bookRef.update({'status': 'Booked'});
 
-    CollectionReference borrowedBooks =
-        FirebaseFirestore.instance.collection('borrowedBooks');
+    CollectionReference bookReservations =
+        FirebaseFirestore.instance.collection('bookReservations');
 
-    await borrowedBooks.add({
-      'bookid': bookId,
-      'userid': borrowerId,
-      'borrowdate': Timestamp.now(),
+    await bookReservations.add({
+      'bookId': bookId,
+      'userId': borrowerId,
+      'date': Timestamp.now(),
+    });
+
+    // Add notification
+    CollectionReference notifications =
+        FirebaseFirestore.instance.collection('Notifications');
+
+    DateTime notificationDate =
+        DateTime.now().add(Duration(days: 14)); // Return date
+    await notifications.add({
+      'userId': borrowerId,
+      'type': 'book',
+      'itemId': bookId,
+      'date': Timestamp.fromDate(notificationDate),
+      'status': 'upcoming',
     });
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(

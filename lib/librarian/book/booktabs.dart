@@ -70,11 +70,11 @@ class _BookTabsState extends State<BookTabs> {
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else {
-          List<DocumentSnapshot> borrowedBooks = snapshot.data!.docs;
+          List<DocumentSnapshot> bookReservations = snapshot.data!.docs;
           return ListView.builder(
-            itemCount: borrowedBooks.length,
+            itemCount: bookReservations.length,
             itemBuilder: (context, index) {
-              var bookData = borrowedBooks[index];
+              var bookData = bookReservations[index];
               return ListTile(
                 title: FutureBuilder<DocumentSnapshot>(
                   future: getBookDetails(bookData['bookid']),
@@ -85,7 +85,8 @@ class _BookTabsState extends State<BookTabs> {
                       return Text('Error: ${snapshot.error}');
                     } else {
                       var book = snapshot.data!;
-                      return Text('Title: ${book['title']}, Status: ${book['status']}');
+                      return Text(
+                          'Title: ${book['title']}, Status: ${book['status']}');
                     }
                   },
                 ),
@@ -102,8 +103,7 @@ class _BookTabsState extends State<BookTabs> {
                     }
                   },
                 ),
-                trailing: 
-                  status == 'Pending'
+                trailing: status == 'Pending'
                     ? Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -121,34 +121,32 @@ class _BookTabsState extends State<BookTabs> {
                           ),
                         ],
                       )
-                    : 
-                  status == 'Booked'
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              _acceptBookReturnRequest(bookData.id);
-                            },
-                            icon: Icon(Icons.check),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              _rejectBookReturnRequest(bookData.id);
-                            },
-                            icon: Icon(Icons.close),
-                          ),
-                        ],
-                      )
-                    :
-                  status == 'Completed'
-                  ? IconButton(
-                    onPressed: () {
-                      _completeAvailable(bookData.id);
-                    },
-                    icon: Icon(Icons.check),
-                    )
-                    : null,
+                    : status == 'Booked'
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                onPressed: () {
+                                  _acceptBookReturnRequest(bookData.id);
+                                },
+                                icon: Icon(Icons.check),
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  _rejectBookReturnRequest(bookData.id);
+                                },
+                                icon: Icon(Icons.close),
+                              ),
+                            ],
+                          )
+                        : status == 'Completed'
+                            ? IconButton(
+                                onPressed: () {
+                                  _completeAvailable(bookData.id);
+                                },
+                                icon: Icon(Icons.check),
+                              )
+                            : null,
               );
             },
           );
@@ -158,11 +156,17 @@ class _BookTabsState extends State<BookTabs> {
   }
 
   Future<DocumentSnapshot> getBookDetails(String bookid) async {
-    return await FirebaseFirestore.instance.collection('Book').doc(bookid).get();
+    return await FirebaseFirestore.instance
+        .collection('Book')
+        .doc(bookid)
+        .get();
   }
 
   Future<DocumentSnapshot> getStudentDetails(String userid) async {
-    return await FirebaseFirestore.instance.collection('Student').doc(userid).get();
+    return await FirebaseFirestore.instance
+        .collection('Student')
+        .doc(userid)
+        .get();
   }
 
   Future<void> _acceptBookRequest(String bookID) async {

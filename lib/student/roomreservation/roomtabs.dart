@@ -67,11 +67,11 @@ class _RoomTabsState extends State<RoomTabs> {
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else {
-          List<DocumentSnapshot> borrowedRooms = snapshot.data!.docs;
+          List<DocumentSnapshot> Reservations = snapshot.data!.docs;
           return ListView.builder(
-            itemCount: borrowedRooms.length,
+            itemCount: Reservations.length,
             itemBuilder: (context, index) {
-              var RoomData = borrowedRooms[index];
+              var RoomData = Reservations[index];
               return ListTile(
                 title: FutureBuilder<DocumentSnapshot>(
                   future: getRoomDetails(RoomData['roomId']),

@@ -152,12 +152,26 @@ class _RoomDetailsState extends State<RoomDetails> {
     await roomRef.update({'status': 'Booked'});
 
     CollectionReference roomReservations =
-        FirebaseFirestore.instance.collection('borrowedRooms');
+        FirebaseFirestore.instance.collection('Reservations');
 
     await roomReservations.add({
       'roomId': roomId,
-      'userid': userId,
-      'borrowdate': Timestamp.now(),
+      'userId': userId,
+      'date': Timestamp.now(),
+    });
+
+    // Add notification
+    CollectionReference notifications =
+        FirebaseFirestore.instance.collection('Notifications');
+
+    DateTime notificationDate = DateTime.now()
+        .add(Duration(days: 7)); // or your preferred notification date
+    await notifications.add({
+      'userId': userId,
+      'type': 'room',
+      'itemId': roomId,
+      'date': Timestamp.fromDate(notificationDate),
+      'status': 'upcoming',
     });
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(

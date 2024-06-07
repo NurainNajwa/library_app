@@ -28,7 +28,7 @@ class _BookingHistoryState extends State<BookingHistory> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Booking History',
+          'My Booking',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20.0,

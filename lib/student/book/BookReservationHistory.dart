@@ -32,8 +32,8 @@ class _BookReservationHistoryState extends State<BookReservationHistory> {
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('borrowedBooks')
-          .where('userid', isEqualTo: userId)
+          .collection('bookReservations')
+          .where('userId', isEqualTo: userId)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -59,7 +59,7 @@ class _BookReservationHistoryState extends State<BookReservationHistory> {
           itemBuilder: (context, index) {
             var reservation = snapshot.data!.docs[index];
             return FutureBuilder<String>(
-              future: _getBookTitle(reservation['bookid']),
+              future: _getBookTitle(reservation['bookId']),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const ListTile(
@@ -85,7 +85,7 @@ class _BookReservationHistoryState extends State<BookReservationHistory> {
                       ),
                     ),
                     subtitle: Text(
-                      'Borrowed on: ${_formatDate(reservation['borrowdate'])}',
+                      'Borrowed on: ${_formatDate(reservation['date'])}',
                       style: const TextStyle(
                         fontSize: 16.0,
                         color: Colors.black54,
@@ -95,9 +95,15 @@ class _BookReservationHistoryState extends State<BookReservationHistory> {
                       icon: Icon(Icons.delete, color: Colors.red),
                       onPressed: () async {
                         await FirebaseFirestore.instance
-                            .collection('borrowedBooks')
+                            .collection('bookReservations')
                             .doc(reservation.id)
                             .delete();
+
+                        // Update book status to 'Available'
+                        await FirebaseFirestore.instance
+                            .collection('Book')
+                            .doc(reservation['bookId'])
+                            .update({'status': 'Available'});
                       },
                     ),
                   ),
