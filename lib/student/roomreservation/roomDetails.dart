@@ -96,13 +96,13 @@ class _RoomDetailsState extends State<RoomDetails> {
                   'Status: ${roomData['status']}',
                   style: TextStyle(
                     fontSize: 14,
-                    color: roomData['status'] == 'available'
+                    color: roomData['status'] == 'Available'
                         ? Colors.green
                         : Colors.red,
                   ),
                 ),
                 SizedBox(height: 16),
-                if (roomData['status'] == 'available')
+                if (roomData['status'] == 'Available')
                   Center(
                     child: ElevatedButton(
                       onPressed: () async {
