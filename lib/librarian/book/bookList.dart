@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:library_app/librarian/book/addBook.dart';
 import 'deleteBook.dart';
 import 'updateBook.dart';
+import 'searchBook.dart'; // Import the searchBook.dart file
 
 class BookList extends StatefulWidget {
   const BookList({Key? key}) : super(key: key);
@@ -13,50 +14,85 @@ class BookList extends StatefulWidget {
 
 class BookListState extends State<BookList> {
   late CollectionReference _booksCollection;
+  TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     _booksCollection = FirebaseFirestore.instance.collection('Book');
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.trim().toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(height: 30), // Adding space here
-        Expanded(
-          child: Scaffold(
-            appBar: AppBar(
-              title: const Text(
-                'Book List',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20.0,
-                  color: Colors.white,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Book List',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20.0,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xffB81736),
+                const Color(0xff281537),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                labelText: 'Search Books',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
                 ),
-              ),
-              backgroundColor: Colors.transparent,
-              flexibleSpace: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xffB81736),
-                      const Color(0xff281537),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                filled: true,
+                fillColor: Colors.white,
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    setState(() {
+                      _searchQuery =
+                          _searchController.text.trim().toLowerCase();
+                    });
+                  },
                 ),
-              ),
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
               ),
             ),
-            body: StreamBuilder<QuerySnapshot>(
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
               stream: _booksCollection.snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -77,19 +113,44 @@ class BookListState extends State<BookList> {
                   );
                 }
 
+                // Filter books based on search query
+                var books = snapshot.data!.docs;
+                if (_searchQuery.isNotEmpty) {
+                  books = books.where((doc) {
+                    var title = doc['title'].toString().toLowerCase();
+                    var author = doc['author'].toString().toLowerCase();
+                    return title.contains(_searchQuery) ||
+                        author.contains(_searchQuery);
+                  }).toList();
+                }
+
                 return ListView.builder(
-                  itemCount: snapshot.data!.docs.length,
+                  itemCount: books.length,
                   itemBuilder: (context, index) {
-                    var book = snapshot.data!.docs[index];
-                    return Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: Colors.black, width: 1.0),
-                        ),
+                    var book = books[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 10.0, horizontal: 15.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
                       ),
+                      elevation: 5,
                       child: ListTile(
-                        title: Text(book['title'].toString()),
-                        subtitle: Text(book['author'].toString()),
+                        title: Text(
+                          book['title'].toString(),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18.0,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        subtitle: Text(
+                          book['author'].toString(),
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            color: Colors.black54,
+                          ),
+                        ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -141,21 +202,21 @@ class BookListState extends State<BookList> {
                 );
               },
             ),
-            floatingActionButton: FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => addBook(),
-                  ),
-                );
-              },
-              backgroundColor: const Color(0xffB81736),
-              child: const Icon(Icons.add),
-            ),
           ),
-        ),
-      ],
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => addBook(),
+            ),
+          );
+        },
+        backgroundColor: const Color(0xffB81736),
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }

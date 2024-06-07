@@ -50,9 +50,16 @@ class ReserveRoomListState extends State<ReserveRoomList> {
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: DropdownButton<String>(
+            child: DropdownButtonFormField<String>(
               value: _selectedRoomType,
               hint: const Text('Select Room Type'),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+              ),
               items: <String>[
                 'Study Group Room',
                 'Meeting Room',
@@ -111,23 +118,42 @@ class ReserveRoomListState extends State<ReserveRoomList> {
                       );
                     }
 
-                    return Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: Colors.black, width: 1.0),
-                        ),
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 10.0, horizontal: 15.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
                       ),
+                      elevation: 5,
                       child: ListTile(
-                        title: Text(roomData['roomType'].toString()),
+                        contentPadding: const EdgeInsets.all(15.0),
+                        title: Text(
+                          roomData['roomType'].toString(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18.0,
+                            color: Colors.black87,
+                          ),
+                        ),
                         subtitle: Text(
-                            'Capacity: ${roomData['capacity'].toString()}'),
+                          'Capacity: ${roomData['capacity'].toString()}',
+                          style: const TextStyle(
+                            fontSize: 16.0,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        trailing: Icon(
+                          Icons.arrow_forward,
+                          color: Colors.black54,
+                        ),
                         onTap: () {
                           Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    RoomDetails(roomId: room.id),
-                              ));
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  RoomDetails(roomId: room.id),
+                            ),
+                          );
                         },
                       ),
                     );
