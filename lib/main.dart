@@ -1,6 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:library_app/api/firebase_api.dart';
 import 'package:library_app/student/book/bookliststudent.dart';
+import 'firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'auth/welcomeScreen.dart';
 import 'auth/loginScreen.dart';
 import 'auth/regScreen.dart';
@@ -14,6 +18,7 @@ import 'student/bookingHistory.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await FirebaseApi().initNotifications();
   await Firebase.initializeApp(
       options: FirebaseOptions(
     apiKey: 'AIzaSyD7hIRJcEwhaPM7jycmzrCXl-wjWyIsFy0',
@@ -22,7 +27,7 @@ void main() async {
     projectId: 'library-app-502af',
     storageBucket: 'myapp-b9yt18.appspot.com',
   ));
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -40,12 +45,11 @@ class MyApp extends StatelessWidget {
         '/register': (context) => RegScreen(),
         '/logout': (context) => LogoutScreen(),
         '/home': (context) => HomePage(),
-        '/forgotPassword': (context) => forgotpasswordscreen(),
-        '/userProfile': (context) => UserProfileScreen(),
-        '/librarian': (context) => LibrarianHomePage(),
-        '/booklistst': (context) => BookListStudent(),
-        '/reservationRoomList': (context) => ReserveRoomList(),
-        '/bookingHistory': (context) => BookingHistory(),
+        '/forgotPassword': (context) => const forgotpasswordscreen(),
+        '/userProfile': (context) => const UserProfileScreen(),
+        '/librarian': (context) => const LibrarianHomePage(),
+        '/booklistst': (context) => const BookListStudent(),
+        '/reservationRoomList': (context) => const ReserveRoomList()
       },
     );
   }
