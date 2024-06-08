@@ -48,69 +48,71 @@ class _BookReservationHistoryState extends State<BookReservationHistory> {
           );
         }
 
-        if (snapshot.data!.docs.isEmpty) {
-          return const Center(
-            child: Text('No book reservations found'),
-          );
-        }
+        int reservationCount = snapshot.data!.docs.length;
 
-        return ListView.builder(
-          itemCount: snapshot.data!.docs.length,
-          itemBuilder: (context, index) {
-            var reservation = snapshot.data!.docs[index];
-            return FutureBuilder<String>(
-              future: _getBookTitle(reservation['bookId']),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const ListTile(
-                    title: Text('Loading...'),
+        return Column(
+          children: [
+            SizedBox(height: 10),
+            Expanded(
+              child: ListView.builder(
+                itemCount: reservationCount,
+                itemBuilder: (context, index) {
+                  var reservation = snapshot.data!.docs[index];
+                  return FutureBuilder<String>(
+                    future: _getBookTitle(reservation['bookId']),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const ListTile(
+                          title: Text('Loading...'),
+                        );
+                      }
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 10.0, horizontal: 15.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0),
+                        ),
+                        elevation: 5,
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(15.0),
+                          title: Text(
+                            snapshot.data!,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18.0,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Borrowed on: ${_formatDate(reservation['date'])}',
+                            style: const TextStyle(
+                              fontSize: 16.0,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          trailing: IconButton(
+                            icon: Icon(Icons.delete, color: Colors.red),
+                            onPressed: () async {
+                              await FirebaseFirestore.instance
+                                  .collection('bookReservations')
+                                  .doc(reservation.id)
+                                  .delete();
+
+                              await FirebaseFirestore.instance
+                                  .collection('Book')
+                                  .doc(reservation['bookId'])
+                                  .update({'status': 'Available'});
+                            },
+                          ),
+                        ),
+                      );
+                    },
                   );
-                }
-
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                      vertical: 10.0, horizontal: 15.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15.0),
-                  ),
-                  elevation: 5,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(15.0),
-                    title: Text(
-                      snapshot.data!,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18.0,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Borrowed on: ${_formatDate(reservation['date'])}',
-                      style: const TextStyle(
-                        fontSize: 16.0,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () async {
-                        await FirebaseFirestore.instance
-                            .collection('bookReservations')
-                            .doc(reservation.id)
-                            .delete();
-
-                        // Update book status to 'Available'
-                        await FirebaseFirestore.instance
-                            .collection('Book')
-                            .doc(reservation['bookId'])
-                            .update({'status': 'Available'});
-                      },
-                    ),
-                  ),
-                );
-              },
-            );
-          },
+                },
+              ),
+            ),
+          ],
         );
       },
     );

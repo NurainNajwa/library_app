@@ -15,6 +15,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
       options: FirebaseOptions(
     apiKey: 'AIzaSyD7hIRJcEwhaPM7jycmzrCXl-wjWyIsFy0',
@@ -52,12 +53,25 @@ class MyApp extends StatelessWidget {
         '/logout': (context) => LogoutScreen(),
         '/home': (context) => HomePage(),
         '/forgotPassword': (context) => forgotpasswordscreen(),
-        '/userProfile': (context) => UserProfileScreen(),
+        '/userProfile': (context) => UserProfileScreenRoute(),
         '/librarian': (context) => LibrarianHomePage(),
         '/booklistst': (context) => BookListStudent(),
         '/reservationRoomList': (context) => ReserveRoomList(),
         '/bookingHistory': (context) => BookingHistory(),
       },
     );
+  }
+}
+
+class UserProfileScreenRoute extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // Extract the arguments from the ModalRoute
+    final arguments =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final userid = arguments['userid'];
+
+    // Pass the extracted arguments to the UserProfileScreen
+    return UserProfileScreen(userid: userid);
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:library_app/auth/welcomeScreen.dart';
+import 'package:library_app/student/book/fineHistory.dart';
 import 'package:library_app/student/userprofileScreen.dart';
 import 'package:library_app/student/bookingHistory.dart';
 import 'package:library_app/student/notifications.dart';
@@ -23,11 +24,13 @@ class _HomePageState extends State<HomePage> {
   int _notificationCount = 0;
   double _totalFines = 0.0;
   Timer? _timer;
+  int _bookReservationCount = 0;
 
   @override
   void initState() {
     super.initState();
     _fetchNotifications();
+    _fetchBookReservationCount();
     _fetchFines();
     _timer = Timer.periodic(Duration(minutes: 1), (timer) {
       _fetchNotifications();
@@ -39,6 +42,19 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _fetchBookReservationCount() async {
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+
+    QuerySnapshot reservationSnapshot = await FirebaseFirestore.instance
+        .collection('bookReservations')
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    setState(() {
+      _bookReservationCount = reservationSnapshot.docs.length;
+    });
   }
 
   Future<void> _fetchNotifications() async {
@@ -175,34 +191,52 @@ class _HomePageState extends State<HomePage> {
                   SizedBox(height: 20.0),
                   Align(
                     alignment: Alignment.center,
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 150.0,
-                          height: 150.0,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          padding: EdgeInsets.all(20.0),
-                          child: Center(
-                            child: Text(
-                              '10',
-                              style: TextStyle(fontSize: 40.0),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 10.0),
-                        Text(
-                          'Books read',
-                          style: TextStyle(color: Colors.white, fontSize: 16.0),
-                        ),
-                        SizedBox(height: 10.0),
-                        Text(
-                          'Total Fines: MYR $_totalFines',
-                          style: TextStyle(color: Colors.red, fontSize: 16.0),
-                        ),
-                      ],
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('bookReservations')
+                          .where('userId',
+                              isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          _bookReservationCount = snapshot.data!.docs.length;
+                          return Column(
+                            children: [
+                              Container(
+                                width: 150.0,
+                                height: 150.0,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                padding: EdgeInsets.all(20.0),
+                                child: Center(
+                                  child: Text(
+                                    '$_bookReservationCount',
+                                    style: TextStyle(fontSize: 40.0),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 10.0),
+                              Text(
+                                'Books Borrowed',
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 16.0),
+                              ),
+                              SizedBox(height: 10.0),
+                              Text(
+                                'Total Fines: MYR $_totalFines',
+                                style: TextStyle(
+                                    color: Colors.red, fontSize: 16.0),
+                              ),
+                            ],
+                          );
+                        } else if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else {
+                          return CircularProgressIndicator();
+                        }
+                      },
                     ),
                   ),
                   Spacer(),
@@ -232,10 +266,13 @@ class _HomePageState extends State<HomePage> {
                           icon: Icons.person,
                           label: 'Profile',
                           onPressed: () {
+                            String userId =
+                                FirebaseAuth.instance.currentUser!.uid;
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const UserProfileScreen(),
+                                builder: (context) =>
+                                    UserProfileScreen(userid: userId),
                               ),
                             );
                           },
@@ -248,6 +285,21 @@ class _HomePageState extends State<HomePage> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => BookingHistory(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildHomePageButton(
+                          icon: Icons.money,
+                          label: 'Fines',
+                          onPressed: () {
+                            String userId =
+                                FirebaseAuth.instance.currentUser!.uid;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    FineHistoryPage(userId: userId),
                               ),
                             );
                           },
@@ -298,10 +350,13 @@ class _HomePageState extends State<HomePage> {
                         _buildMenuOption(
                           title: 'Profile',
                           onTap: () {
+                            String userId =
+                                FirebaseAuth.instance.currentUser!.uid;
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const UserProfileScreen(),
+                                builder: (context) =>
+                                    UserProfileScreen(userid: userId),
                               ),
                             );
                             setState(() {
@@ -316,6 +371,23 @@ class _HomePageState extends State<HomePage> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => BookingHistory(),
+                              ),
+                            );
+                            setState(() {
+                              _menuVisible = false;
+                            });
+                          },
+                        ),
+                        _buildMenuOption(
+                          title: 'Fines',
+                          onTap: () {
+                            String userId =
+                                FirebaseAuth.instance.currentUser!.uid;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    UserProfileScreen(userid: userId),
                               ),
                             );
                             setState(() {

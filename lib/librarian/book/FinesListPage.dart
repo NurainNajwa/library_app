@@ -4,32 +4,53 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class FinesListPage extends StatelessWidget {
   const FinesListPage({Key? key}) : super(key: key);
 
-  Future<Map<String, double>> _fetchFines() async {
+  // Fetch fines and related data
+  Future<List<Map<String, dynamic>>> _fetchFines() async {
     QuerySnapshot finesSnapshot =
         await FirebaseFirestore.instance.collection('fines').get();
 
-    Map<String, double> userFines = {};
+    List<Map<String, dynamic>> finesList = [];
 
     for (var doc in finesSnapshot.docs) {
       var data = doc.data() as Map<String, dynamic>;
       String userId = data['userId'];
       double fineAmount = data['fineAmount'];
+      String bookId = data['bookId']; // bookId from fines collection
 
-      if (userFines.containsKey(userId)) {
-        userFines[userId] = userFines[userId]! + fineAmount;
-      } else {
-        userFines[userId] = fineAmount;
-      }
+      finesList.add({
+        'userId': userId,
+        'fineAmount': fineAmount,
+        'bookId': bookId,
+      });
     }
 
-    return userFines;
+    return finesList;
   }
 
+  // Get user's name from the 'Student' collection
   Future<String> _getUserName(String userId) async {
-    DocumentSnapshot userSnapshot =
-        await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+        .collection('Student')
+        .doc(userId)
+        .get();
     var userData = userSnapshot.data() as Map<String, dynamic>?;
     return userData?['name'] ?? 'Unknown User';
+  }
+
+  // Get book title from the 'Books' collection using the bookId from the fines collection
+  Future<String> _getBookTitle(String bookId) async {
+    QuerySnapshot bookSnapshot = await FirebaseFirestore.instance
+        .collection('Book')
+        .where('bookid',
+            isEqualTo: bookId) // Use 'bookid' from Books collection
+        .get();
+
+    if (bookSnapshot.docs.isNotEmpty) {
+      var bookData = bookSnapshot.docs.first.data() as Map<String, dynamic>;
+      return bookData['title'] ?? 'Unknown Title';
+    } else {
+      return 'Unknown Title';
+    }
   }
 
   @override
@@ -38,7 +59,7 @@ class FinesListPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Fines List'),
       ),
-      body: FutureBuilder<Map<String, double>>(
+      body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _fetchFines(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -49,7 +70,7 @@ class FinesListPage extends StatelessWidget {
             return const Center(child: Text('Error fetching data'));
           }
 
-          Map<String, double> fines = snapshot.data ?? {};
+          List<Map<String, dynamic>> fines = snapshot.data ?? [];
 
           if (fines.isEmpty) {
             return const Center(child: Text('No fines found'));
@@ -58,21 +79,37 @@ class FinesListPage extends StatelessWidget {
           return ListView.builder(
             itemCount: fines.length,
             itemBuilder: (context, index) {
-              String userId = fines.keys.elementAt(index);
-              double fineAmount = fines[userId]!;
+              var fine = fines[index];
+              String userId = fine['userId'];
+              double fineAmount = fine['fineAmount'];
+              String bookId = fine['bookId'];
 
-              return FutureBuilder<String>(
-                future: _getUserName(userId),
-                builder: (context, userSnapshot) {
-                  if (userSnapshot.connectionState == ConnectionState.waiting) {
+              return FutureBuilder<List<String>>(
+                future: Future.wait([
+                  _getUserName(userId),
+                  _getBookTitle(bookId),
+                ]),
+                builder: (context, userBookSnapshot) {
+                  if (userBookSnapshot.connectionState ==
+                      ConnectionState.waiting) {
                     return ListTile(
                       title: const Text('Loading...'),
                     );
                   }
 
+                  if (userBookSnapshot.hasError) {
+                    return ListTile(
+                      title: const Text('Error loading user/book info'),
+                    );
+                  }
+
+                  String userName = userBookSnapshot.data?[0] ?? 'Unknown User';
+                  String bookTitle =
+                      userBookSnapshot.data?[1] ?? 'Unknown Book';
+
                   return ListTile(
-                    title: Text(userSnapshot.data ?? 'Unknown User'),
-                    subtitle: Text('Fine: MYR $fineAmount'),
+                    title: Text(userName),
+                    subtitle: Text('Fine: MYR $fineAmount\nBook: $bookTitle'),
                   );
                 },
               );
