@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:library_app/firebase_auth_implementation/firebase_auth_services.dart';
+import 'loginScreen.dart';
 
 class RegScreen extends StatefulWidget {
   const RegScreen({Key? key}) : super(key: key); // Fixed key parameter
@@ -17,7 +18,7 @@ class _RegScreenState extends State<RegScreen> {
   TextEditingController _passwordController = TextEditingController();
   TextEditingController _confirmpasswordController = TextEditingController();
   TextEditingController _courseController = TextEditingController();
-  late bool obscureText = true; // Declared obscureText variable
+  bool obscureText = true;
 
   @override
   void dispose() {
@@ -84,7 +85,7 @@ class _RegScreenState extends State<RegScreen> {
                         'Password', _passwordController),
                     buildPasswordTextFieldWithIcon(
                         'Confirm Password', _confirmpasswordController),
-                    const SizedBox(height: 70),
+                    const SizedBox(height: 30),
                     GestureDetector(
                       onTap: _signUp,
                       child: Container(
@@ -108,6 +109,41 @@ class _RegScreenState extends State<RegScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 30),
+                    Align(
+                      alignment: Alignment.center,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Already have an account?",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const loginScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "Sign In",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 17,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -123,8 +159,8 @@ class _RegScreenState extends State<RegScreen> {
     return TextField(
       controller: controller,
       decoration: InputDecoration(
-        suffixIcon: Icon(icon, color: Colors.red), // Adjust the color here
-        labelText: label, // Changed label to labelText
+        suffixIcon: Icon(icon, color: Colors.red),
+        labelText: label,
         labelStyle: const TextStyle(
           fontWeight: FontWeight.bold,
           color: Color(0xffB81736),
@@ -135,27 +171,31 @@ class _RegScreenState extends State<RegScreen> {
 
   Widget buildPasswordTextFieldWithIcon(
       String label, TextEditingController controller) {
-    return TextField(
-      obscureText: obscureText,
-      controller: controller,
-      decoration: InputDecoration(
-        suffixIcon: IconButton(
-          icon: Icon(
-            obscureText ? Icons.visibility : Icons.visibility_off,
-            color: Colors.red,
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return TextField(
+          obscureText: obscureText,
+          controller: controller,
+          decoration: InputDecoration(
+            suffixIcon: IconButton(
+              icon: Icon(
+                obscureText ? Icons.visibility : Icons.visibility_off,
+                color: Colors.red,
+              ),
+              onPressed: () {
+                setState(() {
+                  obscureText = !obscureText;
+                });
+              },
+            ),
+            labelText: label,
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xffB81736),
+            ),
           ),
-          onPressed: () {
-            setState(() {
-              obscureText = !obscureText; // Toggle the visibility
-            });
-          },
-        ),
-        labelText: label, // Changed label to labelText
-        labelStyle: const TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Color(0xffB81736),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -166,6 +206,12 @@ class _RegScreenState extends State<RegScreen> {
     String course = _courseController.text;
     String password = _passwordController.text;
 
+    if (_passwordController.text != _confirmpasswordController.text) {
+      // Passwords do not match
+      print("Passwords do not match");
+      return;
+    }
+
     User? user = await _auth.signUpWithEmailAndPassword(email, password);
     if (user != null) {
       // Save additional user data to Firestore
@@ -174,12 +220,10 @@ class _RegScreenState extends State<RegScreen> {
         'email': email,
         'matricno': matNo,
         'name': username,
-        'password':
-            password, // Note: Storing passwords in plaintext is not secure. Consider hashing it.
         'userid': user.uid,
       });
       print("User is successfully created and data stored in Firestore");
-      Navigator.pushNamed(context, '/login');
+      Navigator.pushReplacementNamed(context, '/login');
     } else {
       print("Sign Up unsuccessful");
     }

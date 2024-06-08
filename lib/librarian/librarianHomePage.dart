@@ -100,13 +100,13 @@ class LibrarianHomePageState extends State<LibrarianHomePage> {
                       );
                     },
                   ),
-                  _buildMenuItem(
-                    icon: Icons.bar_chart,
-                    title: 'Yearly Statistics',
-                    onTap: () {
-                      // Navigate to yearly statistics page
-                    },
-                  ),
+                  // _buildMenuItem(
+                  //   icon: Icons.bar_chart,
+                  //   title: 'Yearly Statistics',
+                  //   onTap: () {
+                  //     // Navigate to yearly statistics page
+                  //   },
+                  // ),
                   _buildMenuItem(
                     icon: Icons.attach_money,
                     title: 'View Fines',
@@ -148,12 +148,12 @@ class LibrarianHomePageState extends State<LibrarianHomePage> {
               // Handle click on Rooms
             },
           ),
-          _buildClickableText(
-            text: 'Statistics',
-            onTap: () {
-              // Handle click on Statistics
-            },
-          ),
+          // _buildClickableText(
+          //   text: 'Statistics',
+          //   onTap: () {
+          //     // Handle click on Statistics
+          //   },
+          // ),
           _buildClickableText(
             text: 'View Fines',
             onTap: () {

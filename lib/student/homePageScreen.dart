@@ -142,12 +142,15 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const welcomeScreen(),
-                ),
-              );
+              FirebaseAuth.instance.signOut().then((_) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const welcomeScreen(),
+                  ),
+                  (route) => false,
+                );
+              });
             },
           ),
         ],
@@ -181,27 +184,6 @@ class _HomePageState extends State<HomePage> {
                           style: TextStyle(color: Colors.black87, fontSize: 20),
                         ),
                         SizedBox(height: 10.0),
-                        Container(
-                          padding: EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: Color.fromRGBO(244, 243, 243, 1),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: TextField(
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              prefixIcon: Icon(
-                                Icons.search,
-                                color: Colors.black87,
-                              ),
-                              hintText: "Search you're looking for...",
-                              hintStyle: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -225,12 +207,22 @@ class _HomePageState extends State<HomePage> {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 10,
+                                      offset: Offset(0, 5),
+                                    ),
+                                  ],
                                 ),
                                 padding: EdgeInsets.all(20.0),
                                 child: Center(
                                   child: Text(
                                     '$_bookReservationCount',
-                                    style: TextStyle(fontSize: 40.0),
+                                    style: TextStyle(
+                                      fontSize: 40.0,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -241,10 +233,24 @@ class _HomePageState extends State<HomePage> {
                                     color: Colors.white, fontSize: 16.0),
                               ),
                               SizedBox(height: 10.0),
-                              Text(
-                                'Total Fines: MYR $_totalFines',
-                                style: TextStyle(
-                                    color: Colors.red, fontSize: 16.0),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.red[100],
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 10,
+                                      offset: Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                padding: EdgeInsets.all(10),
+                                child: Text(
+                                  'Total Fines: MYR $_totalFines',
+                                  style: TextStyle(
+                                      color: Colors.red, fontSize: 16.0),
+                                ),
                               ),
                             ],
                           );

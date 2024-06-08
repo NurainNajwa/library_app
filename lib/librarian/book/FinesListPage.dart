@@ -6,49 +6,65 @@ class FinesListPage extends StatelessWidget {
 
   // Fetch fines and related data
   Future<List<Map<String, dynamic>>> _fetchFines() async {
-    QuerySnapshot finesSnapshot =
-        await FirebaseFirestore.instance.collection('fines').get();
+    try {
+      QuerySnapshot finesSnapshot =
+          await FirebaseFirestore.instance.collection('fines').get();
 
-    List<Map<String, dynamic>> finesList = [];
+      List<Map<String, dynamic>> finesList = [];
 
-    for (var doc in finesSnapshot.docs) {
-      var data = doc.data() as Map<String, dynamic>;
-      String userId = data['userId'];
-      double fineAmount = data['fineAmount'];
-      String bookId = data['bookId']; // bookId from fines collection
+      for (var doc in finesSnapshot.docs) {
+        var data = doc.data() as Map<String, dynamic>;
+        String userId = data['userId'];
+        double fineAmount = (data['fineAmount'] as num)
+            .toDouble(); // Ensure fineAmount is treated as double
+        String bookId = data['bookId']; // bookId from fines collection
 
-      finesList.add({
-        'userId': userId,
-        'fineAmount': fineAmount,
-        'bookId': bookId,
-      });
+        finesList.add({
+          'userId': userId,
+          'fineAmount': fineAmount,
+          'bookId': bookId,
+        });
+      }
+
+      return finesList;
+    } catch (e) {
+      print('Error fetching fines: $e');
+      rethrow;
     }
-
-    return finesList;
   }
 
   // Get user's name from the 'Student' collection
   Future<String> _getUserName(String userId) async {
-    DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
-        .collection('Student')
-        .doc(userId)
-        .get();
-    var userData = userSnapshot.data() as Map<String, dynamic>?;
-    return userData?['name'] ?? 'Unknown User';
+    try {
+      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+          .collection('Student')
+          .doc(userId)
+          .get();
+      var userData = userSnapshot.data() as Map<String, dynamic>?;
+      return userData?['name'] ?? 'Unknown User';
+    } catch (e) {
+      print('Error fetching user name for $userId: $e');
+      return 'Unknown User';
+    }
   }
 
   // Get book title from the 'Books' collection using the bookId from the fines collection
   Future<String> _getBookTitle(String bookId) async {
-    QuerySnapshot bookSnapshot = await FirebaseFirestore.instance
-        .collection('Book')
-        .where('bookid',
-            isEqualTo: bookId) // Use 'bookid' from Books collection
-        .get();
+    try {
+      QuerySnapshot bookSnapshot = await FirebaseFirestore.instance
+          .collection('Book')
+          .where('bookid',
+              isEqualTo: bookId) // Use 'bookid' from Books collection
+          .get();
 
-    if (bookSnapshot.docs.isNotEmpty) {
-      var bookData = bookSnapshot.docs.first.data() as Map<String, dynamic>;
-      return bookData['title'] ?? 'Unknown Title';
-    } else {
+      if (bookSnapshot.docs.isNotEmpty) {
+        var bookData = bookSnapshot.docs.first.data() as Map<String, dynamic>;
+        return bookData['title'] ?? 'Unknown Title';
+      } else {
+        return 'Unknown Title';
+      }
+    } catch (e) {
+      print('Error fetching book title for $bookId: $e');
       return 'Unknown Title';
     }
   }
@@ -58,6 +74,18 @@ class FinesListPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fines List'),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color.fromARGB(255, 122, 24, 17),
+                Color.fromARGB(255, 21, 1, 3)
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _fetchFines(),
@@ -67,6 +95,7 @@ class FinesListPage extends StatelessWidget {
           }
 
           if (snapshot.hasError) {
+            print('Error in FutureBuilder: ${snapshot.error}');
             return const Center(child: Text('Error fetching data'));
           }
 
@@ -93,12 +122,16 @@ class FinesListPage extends StatelessWidget {
                   if (userBookSnapshot.connectionState ==
                       ConnectionState.waiting) {
                     return ListTile(
+                      leading: CircleAvatar(child: Icon(Icons.person)),
                       title: const Text('Loading...'),
                     );
                   }
 
                   if (userBookSnapshot.hasError) {
+                    print(
+                        'Error in nested FutureBuilder: ${userBookSnapshot.error}');
                     return ListTile(
+                      leading: CircleAvatar(child: Icon(Icons.error)),
                       title: const Text('Error loading user/book info'),
                     );
                   }
@@ -107,9 +140,19 @@ class FinesListPage extends StatelessWidget {
                   String bookTitle =
                       userBookSnapshot.data?[1] ?? 'Unknown Book';
 
-                  return ListTile(
-                    title: Text(userName),
-                    subtitle: Text('Fine: MYR $fineAmount\nBook: $bookTitle'),
+                  return Card(
+                    elevation: 3,
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Color.fromARGB(255, 184, 18, 46),
+                        child: Text(userName[0],
+                            style: TextStyle(color: Colors.white)),
+                      ),
+                      title: Text(userName),
+                      subtitle: Text('Fine: MYR $fineAmount\nBook: $bookTitle'),
+                    ),
                   );
                 },
               );

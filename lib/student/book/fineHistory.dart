@@ -20,18 +20,26 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20.0,
-            color: Colors.white,
           ),
         ),
         backgroundColor: const Color(0xffB81736),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xffB81736),
+                Color(0xff281537),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              const Color(0xffB81736),
-              const Color(0xff281537),
-            ],
+            colors: [Colors.white, Colors.grey],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -58,7 +66,7 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
                         style: TextStyle(
                           fontSize: 24.0,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Colors.black,
                         ),
                       ),
                       SizedBox(height: 5.0),
@@ -66,7 +74,7 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
                         'MYR ${totalFines.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 18.0,
-                          color: Colors.white,
+                          color: Colors.black,
                         ),
                       ),
                     ],
@@ -86,7 +94,7 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
                     return Center(
                       child: Text(
                         'Error fetching data',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(color: Colors.black),
                       ),
                     );
                   }
@@ -101,7 +109,7 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
                     return Center(
                       child: Text(
                         'No fines found',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(color: Colors.black),
                       ),
                     );
                   }
@@ -116,6 +124,14 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10.0),
                           color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 1,
+                              blurRadius: 5,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,12 +141,16 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
                               style: TextStyle(
                                 fontSize: 18.0,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
                             ),
                             SizedBox(height: 5.0),
                             Text(
                               'Fine Amount: MYR ${fine['fineAmount']}',
-                              style: TextStyle(fontSize: 16.0),
+                              style: TextStyle(
+                                fontSize: 16.0,
+                                color: Colors.black,
+                              ),
                             ),
                           ],
                         ),
@@ -144,11 +164,6 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
         ),
       ),
     );
-  }
-
-  String _formatDate(Timestamp timestamp) {
-    DateTime date = timestamp.toDate();
-    return '${date.year}-${date.month}-${date.day} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   Future<double> _calculateTotalFines() async {

@@ -16,7 +16,7 @@ class _logScreen extends State<loginScreen> {
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
 
-  late final TextEditingController? controller;
+  bool obscureText = true;
 
   @override
   void dispose() {
@@ -195,7 +195,7 @@ class _logScreen extends State<loginScreen> {
     return TextField(
       controller: controller,
       decoration: InputDecoration(
-        suffixIcon: Icon(icon, color: Colors.red), // Adjust the color here
+        suffixIcon: Icon(icon, color: Colors.red),
         labelText: label,
         labelStyle: const TextStyle(
           fontWeight: FontWeight.bold,
@@ -207,29 +207,31 @@ class _logScreen extends State<loginScreen> {
 
   Widget buildPasswordTextFieldWithIcon(
       String label, TextEditingController controller) {
-    bool obscureText = true; // Initially obscure the text
-
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      decoration: InputDecoration(
-        suffixIcon: IconButton(
-          icon: Icon(
-            obscureText ? Icons.visibility : Icons.visibility_off,
-            color: Colors.red,
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return TextField(
+          controller: controller,
+          obscureText: obscureText,
+          decoration: InputDecoration(
+            suffixIcon: IconButton(
+              icon: Icon(
+                obscureText ? Icons.visibility : Icons.visibility_off,
+                color: Colors.red,
+              ),
+              onPressed: () {
+                setState(() {
+                  obscureText = !obscureText;
+                });
+              },
+            ),
+            labelText: label,
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xffB81736),
+            ),
           ),
-          onPressed: () {
-            setState(() {
-              obscureText = !obscureText; // Toggle the visibility
-            });
-          },
-        ),
-        labelText: label,
-        labelStyle: const TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Color(0xffB81736),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -238,9 +240,9 @@ class _logScreen extends State<loginScreen> {
     String password = _passwordController.text;
 
     if (email != 'library@domain.com') {
-      // Librarian login
+      // Student login
       if (password.isNotEmpty) {
-        // Proceed with librarian login
+        // Proceed with student login
         try {
           User? userCredential = await _auth.signInWithEmailAndPassword(
             email,
@@ -248,7 +250,7 @@ class _logScreen extends State<loginScreen> {
           );
 
           if (userCredential != null) {
-            print("Librarian is successfully signed in");
+            print("Student is successfully signed in");
             Navigator.pushNamed(context, '/home');
           } else {
             print("Student sign in unsuccessful");
