@@ -2,24 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 class FirebaseAuthServices {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseAuth _auth = FirebaseAuth.instance;
 
-  FirebaseAuthServices() {
-    _initializeFirebase();
-  }
-
-  Future<void> _initializeFirebase() async {
-    try {
-      await Firebase.initializeApp();
-    } catch (e) {
-      if (e.toString().contains('[core/duplicate-app]')) {
-        // Firebase app is already initialized, ignore the error
-        // No action needed, continue the app initialization
-      } else {
-        rethrow;
-      }
-    }
-  }
+  // Constructor, not used for Firebase initialization
+  FirebaseAuthServices();
 
   Future<User?> signUpWithEmailAndPassword(
       String email, String password) async {
@@ -28,9 +14,10 @@ class FirebaseAuthServices {
           email: email, password: password);
       return credential.user;
     } catch (e) {
-      print("Error occurred");
+      print("Error occurred during sign up: ${e.toString()}");
+      throw FirebaseAuthException(
+          message: 'Error occurred during sign up', code: 'signup_error');
     }
-    return null;
   }
 
   Future<User?> signInWithEmailAndPassword(
@@ -40,8 +27,15 @@ class FirebaseAuthServices {
           email: email, password: password);
       return credential.user;
     } catch (e) {
-      print("Error occurred");
+      print("Error occurred during sign in: ${e.toString()}");
+      throw FirebaseAuthException(
+          message: 'Error occurred during sign in', code: 'signin_error');
     }
-    return null;
   }
+}
+
+void main() async {
+  // Initialize Firebase outside the class
+  await Firebase.initializeApp();
+  // Use your FirebaseAuthServices class here
 }

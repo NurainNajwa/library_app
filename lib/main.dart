@@ -12,18 +12,24 @@ import 'librarian/librarianHomePage.dart';
 import 'student/roomreservation/reservationRoomList.dart';
 import 'student/bookingHistory.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+// Import FirebaseAuthServices if it's used here
+import 'firebase_auth_implementation/firebase_auth_services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-      options: FirebaseOptions(
+  const FirebaseOptions firebaseOptions = FirebaseOptions(
     apiKey: 'AIzaSyD7hIRJcEwhaPM7jycmzrCXl-wjWyIsFy0',
     appId: '1:954659947232:android:74c8e9687e70db16c60685',
     messagingSenderId: 'sendid',
     projectId: 'library-app-502af',
     storageBucket: 'myapp-b9yt18.appspot.com',
-  ));
+  );
+
+  // Ensure Firebase is initialized only once
+  await Firebase.initializeApp(
+    options: firebaseOptions,
+  );
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -33,6 +39,9 @@ void main() async {
   final InitializationSettings initializationSettings =
       InitializationSettings(android: initializationSettingsAndroid);
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  // Initialize FirebaseAuthServices if it's used here
+  final FirebaseAuthServices firebaseAuthServices = FirebaseAuthServices();
 
   runApp(MyApp());
 }
