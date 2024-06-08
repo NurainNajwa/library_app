@@ -28,6 +28,41 @@ class _BookReservationHistoryState extends State<BookReservationHistory> {
     return '${date.year}-${date.month}-${date.day} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
+  Future<void> _deleteBooking(String reservationId, String bookId) async {
+    // Remove book reservation
+    await FirebaseFirestore.instance
+        .collection('bookReservations')
+        .doc(reservationId)
+        .delete();
+
+    // Update book status
+    await FirebaseFirestore.instance
+        .collection('Book')
+        .doc(bookId)
+        .update({'status': 'Available'});
+
+    // Delete notification
+    await _deleteNotification(bookId);
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Book reservation cancelled successfully'),
+    ));
+  }
+
+  Future<void> _deleteNotification(String bookId) async {
+    CollectionReference notifications =
+        FirebaseFirestore.instance.collection('Notifications');
+
+    QuerySnapshot notificationSnapshot = await notifications
+        .where('userId', isEqualTo: userId)
+        .where('itemId', isEqualTo: bookId)
+        .get();
+
+    for (QueryDocumentSnapshot doc in notificationSnapshot.docs) {
+      await doc.reference.delete();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
@@ -66,7 +101,6 @@ class _BookReservationHistoryState extends State<BookReservationHistory> {
                           title: Text('Loading...'),
                         );
                       }
-
                       return Card(
                         margin: const EdgeInsets.symmetric(
                             vertical: 10.0, horizontal: 15.0),
@@ -94,15 +128,8 @@ class _BookReservationHistoryState extends State<BookReservationHistory> {
                           trailing: IconButton(
                             icon: Icon(Icons.delete, color: Colors.red),
                             onPressed: () async {
-                              await FirebaseFirestore.instance
-                                  .collection('bookReservations')
-                                  .doc(reservation.id)
-                                  .delete();
-
-                              await FirebaseFirestore.instance
-                                  .collection('Book')
-                                  .doc(reservation['bookId'])
-                                  .update({'status': 'Available'});
+                              await _deleteBooking(
+                                  reservation.id, reservation['bookId']);
                             },
                           ),
                         ),

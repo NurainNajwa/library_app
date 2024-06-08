@@ -144,7 +144,30 @@ class _BookDetailsState extends State<BookDetails> {
                     ),
                   )
                 else
-                  Text("Sorry, this book is already booked"),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await _cancelBook(snapshot.data!.id);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red, // Background color
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(30), // Rounded corners
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel Book',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           );
@@ -156,7 +179,6 @@ class _BookDetailsState extends State<BookDetails> {
   Future<DocumentSnapshot> getBookDetails(String bookId) async {
     DocumentSnapshot snapshot =
         await FirebaseFirestore.instance.collection('Book').doc(bookId).get();
-
     return snapshot;
   }
 
@@ -192,5 +214,45 @@ class _BookDetailsState extends State<BookDetails> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('Book borrowed successfully'),
     ));
+  }
+
+  Future<void> _cancelBook(String bookId) async {
+    DocumentReference bookRef =
+        FirebaseFirestore.instance.collection('Book').doc(bookId);
+
+    await bookRef.update({'status': 'Available'});
+
+    // Remove book reservation
+    CollectionReference bookReservations =
+        FirebaseFirestore.instance.collection('bookReservations');
+
+    QuerySnapshot reservationSnapshot = await bookReservations
+        .where('bookId', isEqualTo: bookId)
+        .where('userId', isEqualTo: borrowerId)
+        .get();
+
+    for (QueryDocumentSnapshot doc in reservationSnapshot.docs) {
+      await doc.reference.delete();
+    }
+
+    // Delete notification
+    await deleteNotification(bookId);
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Book reservation cancelled successfully'),
+    ));
+  }
+
+  Future<void> deleteNotification(String bookId) async {
+    CollectionReference notifications =
+        FirebaseFirestore.instance.collection('Notifications');
+    QuerySnapshot notificationSnapshot = await notifications
+        .where('userId', isEqualTo: borrowerId)
+        .where('itemId', isEqualTo: bookId)
+        .get();
+
+    for (QueryDocumentSnapshot doc in notificationSnapshot.docs) {
+      await doc.reference.delete();
+    }
   }
 }

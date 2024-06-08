@@ -128,7 +128,30 @@ class _RoomDetailsState extends State<RoomDetails> {
                     ),
                   )
                 else
-                  Text("Sorry, this room is already booked"),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await _cancelReservation(snapshot.data!.id);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red, // Background color
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(30), // Rounded corners
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel Reservation',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           );
@@ -177,5 +200,48 @@ class _RoomDetailsState extends State<RoomDetails> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('Room reserved successfully'),
     ));
+  }
+
+  Future<void> _cancelReservation(String roomId) async {
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+    DocumentReference roomRef =
+        FirebaseFirestore.instance.collection('Rooms').doc(roomId);
+
+    await roomRef.update({'status': 'Available'});
+
+    // Remove room reservation
+    CollectionReference roomReservations =
+        FirebaseFirestore.instance.collection('Reservations');
+
+    QuerySnapshot reservationSnapshot = await roomReservations
+        .where('roomId', isEqualTo: roomId)
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    for (QueryDocumentSnapshot doc in reservationSnapshot.docs) {
+      await doc.reference.delete();
+    }
+
+    // Delete notification
+    await deleteNotification(roomId);
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Room reservation cancelled successfully'),
+    ));
+  }
+
+  Future<void> deleteNotification(String roomId) async {
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+    CollectionReference notifications =
+        FirebaseFirestore.instance.collection('Notifications');
+
+    QuerySnapshot notificationSnapshot = await notifications
+        .where('userId', isEqualTo: userId)
+        .where('itemId', isEqualTo: roomId)
+        .get();
+
+    for (QueryDocumentSnapshot doc in notificationSnapshot.docs) {
+      await doc.reference.delete();
+    }
   }
 }

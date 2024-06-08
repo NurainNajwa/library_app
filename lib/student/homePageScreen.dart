@@ -32,6 +32,7 @@ class _HomePageState extends State<HomePage> {
     _fetchNotifications();
     _fetchBookReservationCount();
     _fetchFines();
+    _listenForNotificationChanges();
     _timer = Timer.periodic(Duration(minutes: 1), (timer) {
       _fetchNotifications();
       _fetchFines();
@@ -90,6 +91,20 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _listenForNotificationChanges() {
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+    FirebaseFirestore.instance
+        .collection('Notifications')
+        .where('userId', isEqualTo: userId)
+        .where('status', isEqualTo: 'upcoming')
+        .snapshots()
+        .listen((snapshot) {
+      setState(() {
+        _notificationCount = snapshot.docs.length;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,7 +133,9 @@ class _HomePageState extends State<HomePage> {
                   MaterialPageRoute(
                     builder: (context) => const NotificationsPage(),
                   ),
-                );
+                ).then((_) {
+                  _fetchNotifications(); // Refresh notification count when returning from NotificationsPage
+                });
               },
             ),
           ),
@@ -387,7 +404,7 @@ class _HomePageState extends State<HomePage> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    UserProfileScreen(userid: userId),
+                                    FineHistoryPage(userId: userId),
                               ),
                             );
                             setState(() {

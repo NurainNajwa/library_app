@@ -115,8 +115,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
     });
   }
 
-  Widget _buildNotificationCard(
-      String title, String subtitle, IconData icon, Color iconColor) {
+  Future<void> _deleteNotification(String itemId) async {
+    CollectionReference notifications =
+        FirebaseFirestore.instance.collection('Notifications');
+
+    QuerySnapshot notificationSnapshot = await notifications
+        .where('userId', isEqualTo: userId)
+        .where('itemId', isEqualTo: itemId)
+        .get();
+    for (QueryDocumentSnapshot doc in notificationSnapshot.docs) {
+      await doc.reference.delete();
+    }
+  }
+
+  Widget _buildNotificationCard(String notificationId, String title,
+      String subtitle, IconData icon, Color iconColor) {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
@@ -182,7 +195,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
           if (snapshot.data!.docs.isEmpty) {
             return Center(
-              child: _buildNotificationCard('No notifications', '',
+              child: _buildNotificationCard('', 'No notifications', '',
                   Icons.notifications_none, Colors.grey),
             );
           }
@@ -193,7 +206,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
             var data = doc.data() as Map<String, dynamic>;
             DateTime date = (data['date'] as Timestamp).toDate();
             int daysLeft = date.difference(DateTime.now()).inDays;
-
             if (data['type'] == 'book') {
               notifications.add(
                 FutureBuilder<String>(
@@ -202,9 +214,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     if (bookSnapshot.connectionState ==
                         ConnectionState.waiting) {
                       return _buildNotificationCard(
-                          'Loading...', '', Icons.book, Colors.orange);
+                          doc.id, 'Loading...', '', Icons.book, Colors.orange);
                     }
                     return _buildNotificationCard(
+                      doc.id,
                       'Book Return Reminder: ${bookSnapshot.data}',
                       'Due in $daysLeft days',
                       Icons.book,
@@ -216,6 +229,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             } else if (data['type'] == 'room') {
               notifications.add(
                 _buildNotificationCard(
+                  doc.id,
                   'Upcoming Room Reservation',
                   'Reservation in $daysLeft days',
                   Icons.event,
