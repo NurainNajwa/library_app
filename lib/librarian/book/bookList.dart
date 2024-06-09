@@ -16,6 +16,7 @@ class BookListState extends State<BookList> {
   late CollectionReference _booksCollection;
   TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  late Future<List<QueryDocumentSnapshot>> _searchResults;
 
   @override
   void initState() {
@@ -24,8 +25,10 @@ class BookListState extends State<BookList> {
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.trim().toLowerCase();
+        _searchResults = SearchBook().searchBooks(_searchQuery);
       });
     });
+    _searchResults = SearchBook().searchBooks('');
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'roomDetails.dart';
+import 'searchRoom.dart'; // Import the searchRoom.dart file
 
 class ReserveRoomList extends StatefulWidget {
   const ReserveRoomList({Key? key}) : super(key: key);
@@ -12,7 +13,25 @@ class ReserveRoomList extends StatefulWidget {
 class ReserveRoomListState extends State<ReserveRoomList> {
   final CollectionReference _roomsCollection =
       FirebaseFirestore.instance.collection('Rooms');
+  TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   String? _selectedRoomType;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.trim().toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,34 +69,55 @@ class ReserveRoomListState extends State<ReserveRoomList> {
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: DropdownButton<String>(
-              value: _selectedRoomType,
-              hint: const Text('Select Room Type'),
-              items: <String>[
-                'Study Group Room',
-                'Meeting Room',
-                'Activity Room',
-                'Seminar Room',
-              ].map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedRoomType = newValue;
-                });
-              },
+            child: Column(
+              children: [
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    labelText: 'Search Rooms',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: () {
+                        setState(() {
+                          _searchQuery =
+                              _searchController.text.trim().toLowerCase();
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10),
+                DropdownButton<String>(
+                  value: _selectedRoomType,
+                  hint: const Text('Select Room Type'),
+                  items: <String>[
+                    'Study Group Room',
+                    'Meeting Room',
+                    'Activity Room',
+                    'Seminar Room',
+                  ].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedRoomType = newValue;
+                    });
+                  },
+                ),
+              ],
             ),
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: _selectedRoomType == null
-                  ? _roomsCollection.snapshots()
-                  : _roomsCollection
-                      .where('roomType', isEqualTo: _selectedRoomType)
-                      .snapshots(),
+              stream: _roomsCollection.snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return const Center(
@@ -97,10 +137,26 @@ class ReserveRoomListState extends State<ReserveRoomList> {
                   );
                 }
 
+                // Filter rooms based on search query and selected room type
+                var rooms = snapshot.data!.docs;
+                if (_searchQuery.isNotEmpty || _selectedRoomType != null) {
+                  rooms = rooms.where((doc) {
+                    var roomData = doc.data() as Map<String, dynamic>;
+                    var roomType = roomData['roomType'].toString().toLowerCase();
+                    var capacity = roomData['capacity'].toString().toLowerCase();
+                    var matchesSearchQuery = _searchQuery.isEmpty ||
+                        roomType.contains(_searchQuery) ||
+                        capacity.contains(_searchQuery);
+                    var matchesRoomType = _selectedRoomType == null ||
+                        roomType == _selectedRoomType!.toLowerCase();
+                    return matchesSearchQuery && matchesRoomType;
+                  }).toList();
+                }
+
                 return ListView.builder(
-                  itemCount: snapshot.data!.docs.length,
+                  itemCount: rooms.length,
                   itemBuilder: (context, index) {
-                    var room = snapshot.data!.docs[index];
+                    var room = rooms[index];
                     var roomData = room.data() as Map<String, dynamic>;
 
                     if (!roomData.containsKey('roomType') ||
