@@ -13,12 +13,14 @@ class BookDetails extends StatefulWidget {
 
 class _BookDetailsState extends State<BookDetails> {
   late Future<DocumentSnapshot> _bookDetails;
+  late Future<QuerySnapshot> _reservationDetails;
   late String borrowerId;
 
   @override
   void initState() {
     super.initState();
     _bookDetails = getBookDetails(widget.bookid);
+    _reservationDetails = getReservationDetails(widget.bookid);
     borrowerId = FirebaseAuth.instance.currentUser!.uid;
   }
 
@@ -50,126 +52,145 @@ class _BookDetailsState extends State<BookDetails> {
       ),
       body: FutureBuilder<DocumentSnapshot>(
         future: _bookDetails,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+        builder: (context, bookSnapshot) {
+          if (bookSnapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           }
 
-          if (!snapshot.hasData) {
-            return Center(child: Text('Error fetching data'));
+          if (!bookSnapshot.hasData) {
+            return Center(child: Text('Error fetching book data'));
           }
 
-          final bookData = snapshot.data!;
+          final bookData = bookSnapshot.data!;
 
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Author: ${bookData['author']}',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Title: ${bookData['title']}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
-                  ),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Description: ${bookData['description']}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Genre: ${bookData['genre']}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Publication Date: ${bookData['publication_date']}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Status: ${bookData['status']}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: bookData['status'] == 'Available'
-                        ? Colors.green
-                        : Colors.red,
-                  ),
-                ),
-                SizedBox(height: 16),
-                if (bookData['status'] == 'Available')
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await _borrowBook(snapshot.data!.id);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            Color.fromRGBO(121, 37, 65, 1), // Background color
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(30), // Rounded corners
-                        ),
-                      ),
-                      child: Text(
-                        'Borrow Book',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+          return FutureBuilder<QuerySnapshot>(
+            future: _reservationDetails,
+            builder: (context, reservationSnapshot) {
+              if (reservationSnapshot.connectionState ==
+                  ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              }
+
+              if (!reservationSnapshot.hasData) {
+                return Center(child: Text('Error fetching reservation data'));
+              }
+
+              final reservations = reservationSnapshot.data!.docs;
+              bool isBorrowedByCurrentUser = reservations.any(
+                (doc) => doc['userId'] == borrowerId,
+              );
+
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Author: ${bookData['author']}',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                     ),
-                  )
-                else
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await _cancelBook(snapshot.data!.id);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red, // Background color
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(30), // Rounded corners
-                        ),
-                      ),
-                      child: Text(
-                        'Cancel Book',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Title: ${bookData['title']}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
                       ),
                     ),
-                  ),
-              ],
-            ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Description: ${bookData['description']}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Genre: ${bookData['genre']}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Publication Date: ${bookData['publication_date']}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Status: ${bookData['status']}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: bookData['status'] == 'Available'
+                            ? Colors.green
+                            : Colors.red,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    if (bookData['status'] == 'Available')
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            await _borrowBook(bookSnapshot.data!.id);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color.fromRGBO(
+                                121, 37, 65, 1), // Background color
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 40, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(30), // Rounded corners
+                            ),
+                          ),
+                          child: Text(
+                            'Borrow Book',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (isBorrowedByCurrentUser)
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            await _cancelBook(bookSnapshot.data!.id);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red, // Background color
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 40, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(30), // Rounded corners
+                            ),
+                          ),
+                          child: Text(
+                            'Cancel Book',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
           );
         },
       ),
@@ -179,6 +200,14 @@ class _BookDetailsState extends State<BookDetails> {
   Future<DocumentSnapshot> getBookDetails(String bookId) async {
     DocumentSnapshot snapshot =
         await FirebaseFirestore.instance.collection('Book').doc(bookId).get();
+    return snapshot;
+  }
+
+  Future<QuerySnapshot> getReservationDetails(String bookId) async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('bookReservations')
+        .where('bookId', isEqualTo: bookId)
+        .get();
     return snapshot;
   }
 

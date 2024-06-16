@@ -221,6 +221,7 @@ class _RegScreenState extends State<RegScreen> {
         'matricno': matNo,
         'name': username,
         'userid': user.uid,
+        'password': password
       });
       print("User is successfully created and data stored in Firestore");
       Navigator.pushReplacementNamed(context, '/login');
