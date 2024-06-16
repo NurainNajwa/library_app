@@ -57,74 +57,66 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   void _listenForChanges() {
     FirebaseFirestore.instance
-        .collection('Reservations')
-        .where('userId', isEqualTo: userId)
-        .snapshots()
-        .listen((snapshot) {
-      DateTime now = DateTime.now();
-
-      for (var doc in snapshot.docs) {
-        var data = doc.data() as Map<String, dynamic>;
-        if (data['date'] != null) {
-          DateTime reservationDate = (data['date'] as Timestamp).toDate();
-          Duration difference = reservationDate.difference(now);
-
-          if (difference.inDays > 0 && difference.inDays <= 7) {
-            _showNotification('Upcoming Room Reservation',
-                'Your room reservation is in ${difference.inDays} days');
-            _addNotification('room', doc.id, reservationDate);
-          }
-        }
-      }
-    });
-
-    FirebaseFirestore.instance
         .collection('bookReservations')
         .where('userId', isEqualTo: userId)
         .snapshots()
-        .listen((snapshot) {
+        .listen((snapshot) async {
       DateTime now = DateTime.now();
 
       for (var doc in snapshot.docs) {
         var data = doc.data() as Map<String, dynamic>;
-        if (data['date'] != null) {
-          DateTime borrowDate = (data['date'] as Timestamp).toDate();
+        var borrowTimestamp = data['date'];
+        String reservationId = doc.id;
+        String bookId = data['bookId'] ?? 'Unknown Book';
+
+        if (borrowTimestamp != null) {
+          DateTime borrowDate = (borrowTimestamp as Timestamp).toDate();
           DateTime returnDate = borrowDate.add(Duration(days: 14));
           Duration difference = returnDate.difference(now);
 
-          if (difference.inDays > 0 && difference.inDays <= 7) {
-            _showNotification('Upcoming Book Return',
-                'Your book is due in ${difference.inDays} days');
-            _addNotification('book', doc.id, returnDate);
+          int daysLeft = difference.inDays;
+          String status = daysLeft < 0 ? 'overdue' : 'upcoming';
+
+          await _updateOrCreateNotification(
+              'book', reservationId, bookId, returnDate, status, daysLeft);
+          if (daysLeft <= 7 && daysLeft >= 0) {
+            _showNotification(
+                'Upcoming Book Return', 'Your book is due in $daysLeft days');
           }
         }
       }
     });
   }
 
-  void _addNotification(String type, String itemId, DateTime date) async {
+  Future<void> _updateOrCreateNotification(String type, String itemId,
+      String bookId, DateTime date, String status, int daysLeft) async {
     CollectionReference notifications =
         FirebaseFirestore.instance.collection('Notifications');
 
-    await notifications.add({
-      'userId': userId,
-      'type': type,
-      'itemId': itemId,
-      'date': Timestamp.fromDate(date),
-      'status': 'upcoming',
-    });
-  }
-
-  Future<void> _deleteNotification(String itemId) async {
-    CollectionReference notifications =
-        FirebaseFirestore.instance.collection('Notifications');
-
-    QuerySnapshot notificationSnapshot = await notifications
+    QuerySnapshot existingNotifications = await notifications
         .where('userId', isEqualTo: userId)
         .where('itemId', isEqualTo: itemId)
         .get();
-    for (QueryDocumentSnapshot doc in notificationSnapshot.docs) {
-      await doc.reference.delete();
+
+    if (existingNotifications.docs.isEmpty) {
+      // Add new notification
+      await notifications.add({
+        'userId': userId,
+        'type': type,
+        'itemId': itemId,
+        'bookId': bookId,
+        'date': Timestamp.fromDate(date),
+        'status': status,
+        'daysLeft': daysLeft,
+      });
+    } else {
+      // Update existing notification
+      var existingNotification = existingNotifications.docs.first;
+      await notifications.doc(existingNotification.id).update({
+        'date': Timestamp.fromDate(date),
+        'status': status,
+        'daysLeft': daysLeft,
+      });
     }
   }
 
@@ -182,7 +174,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
         stream: FirebaseFirestore.instance
             .collection('Notifications')
             .where('userId', isEqualTo: userId)
-            .where('status', isEqualTo: 'upcoming')
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -205,35 +196,41 @@ class _NotificationsPageState extends State<NotificationsPage> {
           for (var doc in snapshot.data!.docs) {
             var data = doc.data() as Map<String, dynamic>;
             DateTime date = (data['date'] as Timestamp).toDate();
-            int daysLeft = date.difference(DateTime.now()).inDays;
+            int daysLeft = data['daysLeft'] ?? 0; // Default to 0 if null
+            String status = data['status'];
+            String bookId = data['bookId'] ?? 'Unknown Book';
             if (data['type'] == 'book') {
               notifications.add(
                 FutureBuilder<String>(
-                  future: _getBookTitle(data['itemId']),
+                  future: _getBookTitle(bookId),
                   builder: (context, bookSnapshot) {
                     if (bookSnapshot.connectionState ==
                         ConnectionState.waiting) {
                       return _buildNotificationCard(
                           doc.id, 'Loading...', '', Icons.book, Colors.orange);
                     }
-                    return _buildNotificationCard(
-                      doc.id,
-                      'Book Return Reminder: ${bookSnapshot.data}',
-                      'Due in $daysLeft days',
-                      Icons.book,
-                      Colors.orange,
-                    );
+                    if (bookSnapshot.hasData) {
+                      String bookTitle = bookSnapshot.data!;
+                      if (status == 'upcoming') {
+                        return _buildNotificationCard(
+                          doc.id,
+                          'Book Return Reminder: $bookTitle',
+                          'Due in $daysLeft days',
+                          Icons.book,
+                          Colors.orange,
+                        );
+                      } else if (status == 'overdue') {
+                        return _buildNotificationCard(
+                          doc.id,
+                          'Book Return Reminder: $bookTitle',
+                          'Overdue by ${-daysLeft} days',
+                          Icons.book,
+                          Colors.red,
+                        );
+                      }
+                    }
+                    return Container(); // Handle other cases
                   },
-                ),
-              );
-            } else if (data['type'] == 'room') {
-              notifications.add(
-                _buildNotificationCard(
-                  doc.id,
-                  'Upcoming Room Reservation',
-                  'Reservation in $daysLeft days',
-                  Icons.event,
-                  Colors.blue,
                 ),
               );
             }

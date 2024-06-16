@@ -158,7 +158,8 @@ class BookListStudentState extends State<BookListStudent> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => BookDetails(bookid: book.id),
+                              builder: (context) =>
+                                  BookDetails(bookid: book.id),
                             ),
                           );
                         },

@@ -1,10 +1,76 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class FinesListPage extends StatelessWidget {
+class FinesListPage extends StatefulWidget {
   const FinesListPage({Key? key}) : super(key: key);
 
-  // Fetch fines and related data
+  @override
+  _FinesListPageState createState() => _FinesListPageState();
+}
+
+class _FinesListPageState extends State<FinesListPage> {
+  @override
+  void initState() {
+    super.initState();
+    _calculateFines();
+  }
+
+  Future<void> _calculateFines() async {
+    final now = DateTime.now();
+    final overdueLimit = Duration(days: 14);
+
+    QuerySnapshot reservationsSnapshot =
+        await FirebaseFirestore.instance.collection('bookReservations').get();
+
+    for (var doc in reservationsSnapshot.docs) {
+      var data = doc.data() as Map<String, dynamic>;
+      var borrowTimestamp = data['date'];
+      String userId = data['userId'];
+      String bookId = data['bookId'];
+
+      if (borrowTimestamp != null) {
+        DateTime borrowDate = (borrowTimestamp as Timestamp).toDate();
+        Duration overdueDuration = now.difference(borrowDate) - overdueLimit;
+
+        if (overdueDuration > Duration.zero) {
+          int daysLate = overdueDuration.inDays;
+          double fineAmount = daysLate * 1.0; // RM1 per day late
+
+          // Check if fine already exists
+          QuerySnapshot fineSnapshot = await FirebaseFirestore.instance
+              .collection('fines')
+              .where('userId', isEqualTo: userId)
+              .where('bookId', isEqualTo: bookId)
+              .get();
+
+          if (fineSnapshot.docs.isEmpty) {
+            await FirebaseFirestore.instance.collection('fines').add({
+              'userId': userId,
+              'bookId': bookId,
+              'borrowDate': borrowDate,
+              'fineAmount': fineAmount,
+            });
+          } else {
+            // Update existing fine amount
+            DocumentSnapshot fineDoc = fineSnapshot.docs.first;
+            await fineDoc.reference.update({
+              'fineAmount': fineAmount,
+            });
+          }
+
+          await FirebaseFirestore.instance.collection('Notifications').add({
+            'userId': userId,
+            'type': 'book',
+            'itemId': doc.id,
+            'date': Timestamp.now(),
+            'status': 'overdue',
+          });
+        }
+      }
+    }
+  }
+
   Future<List<Map<String, dynamic>>> _fetchFines() async {
     try {
       QuerySnapshot finesSnapshot =
@@ -14,15 +80,28 @@ class FinesListPage extends StatelessWidget {
 
       for (var doc in finesSnapshot.docs) {
         var data = doc.data() as Map<String, dynamic>;
-        String userId = data['userId'];
-        double fineAmount = (data['fineAmount'] as num)
-            .toDouble(); // Ensure fineAmount is treated as double
-        String bookId = data['bookId']; // bookId from fines collection
+        String userId = data['userId'] ?? '';
+        String bookId = data['bookId'] ?? '';
+        var borrowTimestamp = data['borrowDate'];
+
+        if (borrowTimestamp == null || userId.isEmpty || bookId.isEmpty) {
+          print('Missing data for document: ${doc.id}');
+          continue;
+        }
+
+        DateTime borrowDate;
+        if (borrowTimestamp is Timestamp) {
+          borrowDate = borrowTimestamp.toDate();
+        } else {
+          print('Invalid timestamp format for document: ${doc.id}');
+          continue;
+        }
 
         finesList.add({
           'userId': userId,
-          'fineAmount': fineAmount,
+          'fineAmount': data['fineAmount'],
           'bookId': bookId,
+          'borrowDate': borrowDate,
         });
       }
 
@@ -33,7 +112,6 @@ class FinesListPage extends StatelessWidget {
     }
   }
 
-  // Get user's name from the 'Student' collection
   Future<String> _getUserName(String userId) async {
     try {
       DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
@@ -48,25 +126,82 @@ class FinesListPage extends StatelessWidget {
     }
   }
 
-  // Get book title from the 'Books' collection using the bookId from the fines collection
   Future<String> _getBookTitle(String bookId) async {
     try {
-      QuerySnapshot bookSnapshot = await FirebaseFirestore.instance
-          .collection('Book')
-          .where('bookid',
-              isEqualTo: bookId) // Use 'bookid' from Books collection
-          .get();
-
-      if (bookSnapshot.docs.isNotEmpty) {
-        var bookData = bookSnapshot.docs.first.data() as Map<String, dynamic>;
-        return bookData['title'] ?? 'Unknown Title';
-      } else {
-        return 'Unknown Title';
-      }
+      DocumentSnapshot bookSnapshot =
+          await FirebaseFirestore.instance.collection('Book').doc(bookId).get();
+      var bookData = bookSnapshot.data() as Map<String, dynamic>?;
+      return bookData?['title'] ?? 'Unknown Title';
     } catch (e) {
       print('Error fetching book title for $bookId: $e');
       return 'Unknown Title';
     }
+  }
+
+  Future<void> _clearFines(String userId, String bookId) async {
+    try {
+      QuerySnapshot fineSnapshot = await FirebaseFirestore.instance
+          .collection('fines')
+          .where('userId', isEqualTo: userId)
+          .where('bookId', isEqualTo: bookId)
+          .get();
+
+      if (fineSnapshot.docs.isNotEmpty) {
+        await FirebaseFirestore.instance
+            .collection('fines')
+            .doc(fineSnapshot.docs.first.id)
+            .delete();
+      }
+
+      QuerySnapshot reservationSnapshot = await FirebaseFirestore.instance
+          .collection('bookReservations')
+          .where('userId', isEqualTo: userId)
+          .where('bookId', isEqualTo: bookId)
+          .get();
+
+      if (reservationSnapshot.docs.isNotEmpty) {
+        await FirebaseFirestore.instance
+            .collection('bookReservations')
+            .doc(reservationSnapshot.docs.first.id)
+            .delete();
+      }
+
+      print(
+          'Fines and reservation cleared for userId: $userId, bookId: $bookId');
+    } catch (e) {
+      print('Error clearing fines: $e');
+    }
+  }
+
+  void _showClearFinesDialog(
+      BuildContext context, String userId, String bookId, double fineAmount) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Clear Fines'),
+          content: Text(
+              'Are you sure the user has returned the book and paid the fine of MYR $fineAmount?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Clear Fines'),
+              onPressed: () {
+                _clearFines(userId, bookId).then((_) {
+                  setState(() {});
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -112,6 +247,7 @@ class FinesListPage extends StatelessWidget {
               String userId = fine['userId'];
               double fineAmount = fine['fineAmount'];
               String bookId = fine['bookId'];
+              DateTime borrowDate = fine['borrowDate'];
 
               return FutureBuilder<List<String>>(
                 future: Future.wait([
@@ -139,6 +275,9 @@ class FinesListPage extends StatelessWidget {
                   String userName = userBookSnapshot.data?[0] ?? 'Unknown User';
                   String bookTitle =
                       userBookSnapshot.data?[1] ?? 'Unknown Book';
+                  int daysLate =
+                      DateTime.now().difference(borrowDate).inDays - 14;
+                  DateTime dueDate = borrowDate.add(Duration(days: 14));
 
                   return Card(
                     elevation: 3,
@@ -151,7 +290,16 @@ class FinesListPage extends StatelessWidget {
                             style: TextStyle(color: Colors.white)),
                       ),
                       title: Text(userName),
-                      subtitle: Text('Fine: MYR $fineAmount\nBook: $bookTitle'),
+                      subtitle: Text(
+                        'Fine: MYR $fineAmount\nBook: $bookTitle\nDays Late: $daysLate\nDue Date: ${dueDate.year}-${dueDate.month}-${dueDate.day}',
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.check_circle, color: Colors.green),
+                        onPressed: () {
+                          _showClearFinesDialog(
+                              context, userId, bookId, fineAmount);
+                        },
+                      ),
                     ),
                   );
                 },

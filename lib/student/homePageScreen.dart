@@ -64,7 +64,6 @@ class _HomePageState extends State<HomePage> {
     QuerySnapshot notificationsSnapshot = await FirebaseFirestore.instance
         .collection('Notifications')
         .where('userId', isEqualTo: userId)
-        .where('status', isEqualTo: 'upcoming')
         .get();
 
     setState(() {
@@ -96,7 +95,6 @@ class _HomePageState extends State<HomePage> {
     FirebaseFirestore.instance
         .collection('Notifications')
         .where('userId', isEqualTo: userId)
-        .where('status', isEqualTo: 'upcoming')
         .snapshots()
         .listen((snapshot) {
       setState(() {

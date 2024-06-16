@@ -235,6 +235,73 @@ class _logScreen extends State<loginScreen> {
     );
   }
 
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xffB81736), Color(0xff281537)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Error",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 10.0),
+                  Text(
+                    message,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.0,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 20.0),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      "OK",
+                      style: TextStyle(
+                        color: Color(0xffB81736),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _signInStudent() async {
     String email = _emailController.text;
     String password = _passwordController.text;
@@ -253,16 +320,17 @@ class _logScreen extends State<loginScreen> {
             print("Student is successfully signed in");
             Navigator.pushNamed(context, '/home');
           } else {
-            print("Student sign in unsuccessful");
+            _showErrorDialog("User does not exist.");
           }
         } catch (e) {
           print("Error signing in as student: $e");
-          // Handle sign-in errors
+          _showErrorDialog("Invalid password.");
         }
       } else {
-        // Password is empty
-        print("Password is required for student login");
+        _showErrorDialog("Password is required for student login.");
       }
+    } else {
+      _showErrorDialog("Not a student.");
     }
   }
 
@@ -285,16 +353,17 @@ class _logScreen extends State<loginScreen> {
             print("Librarian is successfully signed in");
             Navigator.pushNamed(context, '/librarian');
           } else {
-            print("Librarian sign in unsuccessful");
+            _showErrorDialog("User does not exist.");
           }
         } catch (e) {
           print("Error signing in as librarian: $e");
-          // Handle sign-in errors
+          _showErrorDialog("Invalid password.");
         }
       } else {
-        // Password is empty
-        print("Password is required for librarian login");
+        _showErrorDialog("Password is required for librarian login.");
       }
+    } else {
+      _showErrorDialog("Not a librarian.");
     }
   }
 }

@@ -63,6 +63,61 @@ class _BookReservationHistoryState extends State<BookReservationHistory> {
     }
   }
 
+  bool _isOverdue(DateTime borrowDate) {
+    DateTime returnDate = borrowDate.add(Duration(days: 14));
+    return DateTime.now().isAfter(returnDate);
+  }
+
+  Widget _buildReservationCard(String reservationId, String bookTitle,
+      DateTime borrowDate, String bookId) {
+    bool isOverdue = _isOverdue(borrowDate);
+
+    return GestureDetector(
+      onTap: () {
+        if (isOverdue) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                'Cancellation is blocked. The book return is overdue by ${DateTime.now().difference(borrowDate.add(Duration(days: 14))).inDays} days.'),
+          ));
+        }
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15.0),
+        ),
+        elevation: 5,
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(15.0),
+          title: Text(
+            bookTitle,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18.0,
+              color: Colors.black87,
+            ),
+          ),
+          subtitle: Text(
+            'Borrowed on: ${_formatDate(Timestamp.fromDate(borrowDate))}',
+            style: const TextStyle(
+              fontSize: 16.0,
+              color: Colors.black54,
+            ),
+          ),
+          trailing: isOverdue
+              ? Icon(Icons.lock, color: Colors.red)
+              : IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red),
+                  onPressed: () async {
+                    await _deleteBooking(reservationId, bookId);
+                  },
+                ),
+          tileColor: isOverdue ? Colors.red.shade100 : null,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
@@ -93,6 +148,8 @@ class _BookReservationHistoryState extends State<BookReservationHistory> {
                 itemCount: reservationCount,
                 itemBuilder: (context, index) {
                   var reservation = snapshot.data!.docs[index];
+                  DateTime borrowDate =
+                      (reservation['date'] as Timestamp).toDate();
                   return FutureBuilder<String>(
                     future: _getBookTitle(reservation['bookId']),
                     builder: (context, snapshot) {
@@ -101,38 +158,11 @@ class _BookReservationHistoryState extends State<BookReservationHistory> {
                           title: Text('Loading...'),
                         );
                       }
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 10.0, horizontal: 15.0),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.0),
-                        ),
-                        elevation: 5,
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(15.0),
-                          title: Text(
-                            snapshot.data!,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18.0,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          subtitle: Text(
-                            'Borrowed on: ${_formatDate(reservation['date'])}',
-                            style: const TextStyle(
-                              fontSize: 16.0,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          trailing: IconButton(
-                            icon: Icon(Icons.delete, color: Colors.red),
-                            onPressed: () async {
-                              await _deleteBooking(
-                                  reservation.id, reservation['bookId']);
-                            },
-                          ),
-                        ),
+                      return _buildReservationCard(
+                        reservation.id,
+                        snapshot.data!,
+                        borrowDate,
+                        reservation['bookId'],
                       );
                     },
                   );
