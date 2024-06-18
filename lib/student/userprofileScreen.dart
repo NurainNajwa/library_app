@@ -66,7 +66,12 @@ class UserProfileScreen extends StatelessWidget {
             children: <Widget>[
               const SizedBox(height: 20),
               Center(
-                child: Image.asset('lib/image/ali.jpg'),
+                child: Icon(
+                  Icons
+                      .person, // This is the user icon provided by Flutter's material icons
+                  size: 50.0, // You can adjust the size as needed
+                  color: Colors.blue, // You can choose any color for the icon
+                ),
               ),
               const SizedBox(height: 20),
               Text(
