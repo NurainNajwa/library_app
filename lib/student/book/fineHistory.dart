@@ -118,42 +118,82 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
                     itemCount: snapshot.data!.docs.length,
                     itemBuilder: (context, index) {
                       var fine = snapshot.data!.docs[index];
-                      return Container(
-                        margin: EdgeInsets.only(bottom: 15.0),
-                        padding: EdgeInsets.all(15.0),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10.0),
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.5),
-                              spreadRadius: 1,
-                              blurRadius: 5,
-                              offset: Offset(0, 3),
+                      Timestamp borrowDate = fine['borrowDate'];
+                      Timestamp returnDate = fine['returnDate'];
+                      Timestamp dueDate = fine['dueDate'];
+                      int lateDays = _calculateLateDays(returnDate, dueDate);
+
+                      return FutureBuilder<String>(
+                        future: _getBookTitle(fine['bookId']),
+                        builder: (context, bookSnapshot) {
+                          if (bookSnapshot.connectionState == ConnectionState.waiting) {
+                            return ListTile(
+                              title: Text('Loading...'),
+                            );
+                          }
+
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 15.0),
+                            padding: EdgeInsets.all(15.0),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10.0),
+                              color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.5),
+                                  spreadRadius: 1,
+                                  blurRadius: 5,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Book ID: ${fine['bookId']}',
-                              style: TextStyle(
-                                fontSize: 18.0,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Book: ${bookSnapshot.data}',
+                                  style: TextStyle(
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                SizedBox(height: 5.0),
+                                Text(
+                                  'Fine Amount: MYR ${fine['fineAmount']}',
+                                  style: TextStyle(
+                                    fontSize: 16.0,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                SizedBox(height: 5.0),
+                                Text(
+                                  'Borrowed on: ${_formatDate(borrowDate)}',
+                                  style: TextStyle(
+                                    fontSize: 16.0,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                                SizedBox(height: 5.0),
+                                Text(
+                                  'Returned on: ${_formatDate(returnDate)}',
+                                  style: TextStyle(
+                                    fontSize: 16.0,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                                SizedBox(height: 5.0),
+                                Text(
+                                  'Late Return Days: $lateDays',
+                                  style: TextStyle(
+                                    fontSize: 16.0,
+                                    color: lateDays > 0 ? Colors.red : Colors.black,
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(height: 5.0),
-                            Text(
-                              'Fine Amount: MYR ${fine['fineAmount']}',
-                              style: TextStyle(
-                                fontSize: 16.0,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     },
                   );
@@ -178,4 +218,25 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
     }
     return totalFines;
   }
+
+  Future<String> _getBookTitle(String bookId) async {
+    DocumentSnapshot bookSnapshot =
+        await FirebaseFirestore.instance.collection('Book').doc(bookId).get();
+    var bookData = bookSnapshot.data() as Map<String, dynamic>?;
+        return bookData?['title'] ?? 'Unknown Book';
+  }
+
+  String _formatDate(Timestamp timestamp) {
+    DateTime date = timestamp.toDate();
+    return '${date.year}-${date.month}-${date.day}';
+  }
+
+  int _calculateLateDays(Timestamp returnDate, Timestamp dueDate) {
+    DateTime returnDateTime = returnDate.toDate();
+    DateTime dueDateTime = dueDate.toDate();
+    return returnDateTime.isAfter(dueDateTime)
+        ? returnDateTime.difference(dueDateTime).inDays
+        : 0;
+  }
 }
+
