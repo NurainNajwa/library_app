@@ -49,6 +49,7 @@ class _FinesListPageState extends State<FinesListPage> {
               'userId': userId,
               'bookId': bookId,
               'borrowDate': borrowDate,
+              'dueDate': borrowDate.add(overdueLimit),
               'fineAmount': fineAmount,
             });
           } else {

@@ -119,9 +119,8 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
                     itemBuilder: (context, index) {
                       var fine = snapshot.data!.docs[index];
                       Timestamp borrowDate = fine['borrowDate'];
-                      Timestamp returnDate = fine['returnDate'];
                       Timestamp dueDate = fine['dueDate'];
-                      int lateDays = _calculateLateDays(returnDate, dueDate);
+                      int lateDays = _calculateLateDays(borrowDate, dueDate);
 
                       return FutureBuilder<String>(
                         future: _getBookTitle(fine['bookId']),
@@ -176,7 +175,7 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
                                 ),
                                 SizedBox(height: 5.0),
                                 Text(
-                                  'Returned on: ${_formatDate(returnDate)}',
+                                  'Due Date: ${_formatDate(dueDate)}',
                                   style: TextStyle(
                                     fontSize: 16.0,
                                     color: Colors.black54,
@@ -220,10 +219,15 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
   }
 
   Future<String> _getBookTitle(String bookId) async {
-    DocumentSnapshot bookSnapshot =
-        await FirebaseFirestore.instance.collection('Book').doc(bookId).get();
-    var bookData = bookSnapshot.data() as Map<String, dynamic>?;
-        return bookData?['title'] ?? 'Unknown Book';
+    try {
+      DocumentSnapshot bookSnapshot =
+          await FirebaseFirestore.instance.collection('Book').doc(bookId).get();
+      var bookData = bookSnapshot.data() as Map<String, dynamic>?;
+      return bookData?['title'] ?? 'Unknown Title';
+    } catch (e) {
+        print('Error fetching book title for $bookId: $e');
+        return 'Unknown Title';
+    }
   }
 
   String _formatDate(Timestamp timestamp) {
@@ -231,12 +235,11 @@ class _FineHistoryPageState extends State<FineHistoryPage> {
     return '${date.year}-${date.month}-${date.day}';
   }
 
-  int _calculateLateDays(Timestamp returnDate, Timestamp dueDate) {
-    DateTime returnDateTime = returnDate.toDate();
+  int _calculateLateDays(Timestamp borrowDate, Timestamp dueDate) {
+    DateTime now = DateTime.now();
     DateTime dueDateTime = dueDate.toDate();
-    return returnDateTime.isAfter(dueDateTime)
-        ? returnDateTime.difference(dueDateTime).inDays
+    return now.isAfter(dueDateTime)
+        ? now.difference(dueDateTime).inDays
         : 0;
   }
 }
-
