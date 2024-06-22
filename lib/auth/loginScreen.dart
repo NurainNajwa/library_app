@@ -1,16 +1,19 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:library_app/firebase_auth_implementation/firebase_auth_services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'forgotpasswordScreen.dart';
 import 'regScreen.dart'; // Import the registration screen
 
 class loginScreen extends StatefulWidget {
-  const loginScreen({Key? key}) : super(key: key);
+  final bool isPasswordReset;
+
+  const loginScreen({Key? key, this.isPasswordReset = false}) : super(key: key);
   @override
-  State<loginScreen> createState() => _logScreen();
+  State<loginScreen> createState() => _LoginScreenState();
 }
 
-class _logScreen extends State<loginScreen> {
+class _LoginScreenState extends State<loginScreen> {
   final FirebaseAuthServices _auth = FirebaseAuthServices();
 
   TextEditingController _emailController = TextEditingController();
@@ -42,9 +45,9 @@ class _logScreen extends State<loginScreen> {
             child: const Padding(
               padding: EdgeInsets.only(top: 60.0, left: 22),
               child: Text(
-                'Hello\nSign in!',
+                'UTM Library\nManagement System',
                 style: TextStyle(
-                  fontSize: 30,
+                  fontSize: 25,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
@@ -75,7 +78,9 @@ class _logScreen extends State<loginScreen> {
                         _passwordController), // Password field with eye icon
                     const SizedBox(height: 60),
                     GestureDetector(
-                      onTap: _signInStudent,
+                      onTap: widget.isPasswordReset
+                          ? _updatePassword
+                          : _signInStudent,
                       child: Container(
                         height: 55,
                         width: 300,
@@ -86,10 +91,12 @@ class _logScreen extends State<loginScreen> {
                             Color(0xff281537),
                           ]),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
-                            'SIGN IN AS STUDENT',
-                            style: TextStyle(
+                            widget.isPasswordReset
+                                ? 'NEW PASSWORD'
+                                : 'SIGN IN AS STUDENT',
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 20,
                               color: Colors.white,
@@ -99,87 +106,91 @@ class _logScreen extends State<loginScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    GestureDetector(
-                      onTap: _signInLibrarian,
-                      child: Container(
-                        height: 55,
-                        width: 300,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          gradient: const LinearGradient(colors: [
-                            Color(0xffB81736),
-                            Color(0xff281537),
-                          ]),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'SIGN IN AS LIBRARIAN',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                              color: Colors.white,
-                            ),
+                    if (!widget.isPasswordReset)
+                      GestureDetector(
+                        onTap: _signInLibrarian,
+                        child: Container(
+                          height: 55,
+                          width: 300,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            gradient: const LinearGradient(colors: [
+                              Color(0xffB81736),
+                              Color(0xff281537),
+                            ]),
                           ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const forgotpasswordscreen(),
-                          ),
-                        );
-                      },
-                      child: const Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 17,
-                            color: Color(0xff281537),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 60),
-                    Align(
-                      alignment: Alignment.center,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const Text(
-                            "Don't have an account?",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const RegScreen(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              "Sign Up",
+                          child: const Center(
+                            child: Text(
+                              'SIGN IN AS LIBRARIAN',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 17,
-                                color: Colors.black,
+                                fontSize: 20,
+                                color: Colors.white,
                               ),
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    )
+                    if (!widget.isPasswordReset) const SizedBox(height: 20),
+                    if (!widget.isPasswordReset)
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const forgotpasswordscreen(),
+                            ),
+                          );
+                        },
+                        child: const Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
+                              color: Color(0xff281537),
+                            ),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 60),
+                    if (!widget.isPasswordReset)
+                      Align(
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Don't have an account?",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const RegScreen(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                "Sign Up",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 17,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
                   ],
                 ),
               ),
@@ -364,6 +375,59 @@ class _logScreen extends State<loginScreen> {
       }
     } else {
       _showErrorDialog("Not a librarian.");
+    }
+  }
+
+  void _updatePassword() async {
+    String email = _emailController.text;
+    String newPassword = _passwordController.text;
+
+    if (newPassword.isNotEmpty) {
+      try {
+        // Assuming user is already authenticated and re-authenticated properly.
+        // Update the password in Firestore
+        final userCollection = FirebaseFirestore.instance.collection('Student');
+        final querySnapshot =
+            await userCollection.where('email', isEqualTo: email).get();
+        if (querySnapshot.docs.isNotEmpty) {
+          final userDoc = querySnapshot.docs.first;
+          await userDoc.reference.update({'password': newPassword});
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Password updated successfully!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          // Navigate back to login screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const loginScreen()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: User not found!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update password: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password cannot be empty!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 }

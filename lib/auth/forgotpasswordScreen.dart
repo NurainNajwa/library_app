@@ -1,15 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'loginScreen.dart'; // Ensure the LoginScreen class is properly imported
+import 'loginScreen.dart';
 
-class forgotpasswordscreen extends StatelessWidget {
+class forgotpasswordscreen extends StatefulWidget {
   const forgotpasswordscreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    TextEditingController _emailController = TextEditingController();
+  _ForgotPasswordScreenState createState() => _ForgotPasswordScreenState();
+}
 
+class _ForgotPasswordScreenState extends State<forgotpasswordscreen> {
+  final TextEditingController _emailController = TextEditingController();
+  bool _isSendingEmail = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -56,9 +68,10 @@ class forgotpasswordscreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             GestureDetector(
-              onTap: () {
-                _sendPasswordResetEmail(context, _emailController.text);
-              },
+              onTap: _isSendingEmail
+                  ? null
+                  : () =>
+                      _sendPasswordResetEmail(context, _emailController.text),
               child: Container(
                 height: 55,
                 width: 300,
@@ -71,15 +84,17 @@ class forgotpasswordscreen extends StatelessWidget {
                   ),
                   border: Border.all(color: Colors.black),
                 ),
-                child: const Center(
-                  child: Text(
-                    'Reset Password',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                child: Center(
+                  child: _isSendingEmail
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Reset Password',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -91,42 +106,38 @@ class forgotpasswordscreen extends StatelessWidget {
 
   // Function to send password reset email
   void _sendPasswordResetEmail(BuildContext context, String email) async {
-    // Check if the email exists in Firestore
-    final userCollection = FirebaseFirestore.instance.collection('Student');
-    final querySnapshot =
-        await userCollection.where('email', isEqualTo: email).get();
-    if (querySnapshot.docs.isEmpty) {
-      // Email does not exist in the database
+    setState(() {
+      _isSendingEmail = true;
+    });
+
+    try {
+      // Send the password reset email
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Email does not exist in the database!'),
+          content: Text('Password reset email sent!'),
           duration: Duration(seconds: 2),
         ),
       );
-    } else {
-      // Email exists, send password reset email
-      try {
-        await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password reset email sent!'),
-            duration: Duration(seconds: 2),
-          ),
-        );
 
-        // Navigate back to login screen after resetting password
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const loginScreen()),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to send password reset email: $e'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
+      // Navigate to login screen with password reset flag
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => loginScreen(isPasswordReset: true),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send password reset email: $e'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isSendingEmail = false;
+      });
     }
   }
 }
