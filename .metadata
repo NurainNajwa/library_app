@@ -34,12 +34,34 @@ migration:
       create_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
       base_revision: 54e66469a933b60ddf175f858f82eaeb97e48c8d
 
-  # User provided section
+# User provided section
 
-  # List of Local paths (relative to this file) that should be
-  # ignored by the migrate tool.
-  #
-  # Files that are not part of the templates will be ignored by default.
-  unmanaged_files:
-    - 'lib/main.dart'
-    - 'ios/Runner.xcodeproj/project.pbxproj'
+# List of Local paths (relative to this file) that should be
+# ignored by the migrate tool.
+#
+# Files that are not part of the templates will be ignored by default.
+unmanaged_files:
+  - 'lib/main.dart'
+  - 'ios/Runner.xcodeproj/project.pbxproj'
+
+# Additional metadata
+Categories:
+  - Connectivity
+License: GPL-3.0-or-later
+SourceCode: https://github.com/NurainNajwa/library_app
+IssueTracker: https://github.com/NurainNajwa/library_app/issues
+Changelog: https://github.com/NurainNajwa/library_app/CHANGELOG.md
+AutoName: Library App
+Description: |-
+  Library App is a Flutter application designed for managing book reservations, fines, and other library functionalities.
+Build:
+  - versionName: 1.0.0
+    versionCode: 1
+    commit: v1.0.0
+    subdir: android
+    gradle:
+      - yes
+AutoUpdateMode: Version %v
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.0
+CurrentVersionCode: 1
