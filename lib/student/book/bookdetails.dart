@@ -246,31 +246,56 @@ class _BookDetailsState extends State<BookDetails> {
   }
 
   Future<void> _cancelBook(String bookId) async {
-    DocumentReference bookRef =
-        FirebaseFirestore.instance.collection('Book').doc(bookId);
+  DocumentReference bookRef =
+      FirebaseFirestore.instance.collection('Book').doc(bookId);
 
-    await bookRef.update({'status': 'Available'});
+  // Check if the user has fines for this book
+  bool hasFines = await checkFines(bookId);
 
-    // Remove book reservation
-    CollectionReference bookReservations =
-        FirebaseFirestore.instance.collection('bookReservations');
-
-    QuerySnapshot reservationSnapshot = await bookReservations
-        .where('bookId', isEqualTo: bookId)
-        .where('userId', isEqualTo: borrowerId)
-        .get();
-
-    for (QueryDocumentSnapshot doc in reservationSnapshot.docs) {
-      await doc.reference.delete();
-    }
-
-    // Delete notification
-    await deleteNotification(bookId);
-
+  if (hasFines) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Book reservation cancelled successfully'),
+      content: Text('You cannot cancel the reservation because fines are charged.'),
     ));
+    return; // Exit the function if fines exist
   }
+
+  // Proceed with cancellation if no fines are found
+  await bookRef.update({'status': 'Available'});
+
+  // Remove book reservation
+  CollectionReference bookReservations =
+      FirebaseFirestore.instance.collection('bookReservations');
+
+  QuerySnapshot reservationSnapshot = await bookReservations
+      .where('bookId', isEqualTo: bookId)
+      .where('userId', isEqualTo: borrowerId)
+      .get();
+
+  for (QueryDocumentSnapshot doc in reservationSnapshot.docs) {
+    await doc.reference.delete();
+  }
+
+  // Delete notification
+  await deleteNotification(bookId);
+
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text('Book reservation cancelled successfully'),
+  ));
+}
+
+Future<bool> checkFines(String bookId) async {
+  // Query fines collection or wherever fines are stored
+  CollectionReference finesRef =
+      FirebaseFirestore.instance.collection('fines');
+
+  QuerySnapshot finesSnapshot = await finesRef
+      .where('bookId', isEqualTo: bookId)
+      .where('userId', isEqualTo: borrowerId)
+      .get();
+
+  return finesSnapshot.docs.isNotEmpty; // Return true if fines exist, false otherwise
+}
+
 
   Future<void> deleteNotification(String bookId) async {
     CollectionReference notifications =
