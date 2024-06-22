@@ -83,6 +83,10 @@ git push origin feature/your-feature-name
 
 Go to the original repository on GitHub and create a pull request.
 
+## Sign In as Librarian
+email: library@domain.com
+password: library_utm
+
 ## License
 This project is licensed under the GPL-3.0-or-later License - see the LICENSE file for details.
 
